@@ -1,0 +1,20 @@
+{
+  "name": "myyatramate",
+  "version": "1.0.0",
+  "description": "MyYatraMate - AI Travel Swiss Knife Web App",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "travel",
+    "ai",
+    "yatramate",
+    "webapp"
+  ],
+  "author": "MyYatraMate",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.3"
+  }
+}
