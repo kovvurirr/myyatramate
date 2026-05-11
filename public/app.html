@@ -929,42 +929,51 @@
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
-    function generateTripPlan() {
-      const fromCity = document.getElementById("fromCity").value || "Hyderabad";
-      const destination = document.getElementById("destination").value || "Dubai";
-      const days = document.getElementById("days").value || "5";
-      const travelType = document.getElementById("travelType").value;
-      const budgetStyle = document.getElementById("budgetStyle").value;
-      const foodPref = document.getElementById("foodPref").value;
+    async function generateTripPlan() {
+  const fromCity = document.getElementById("fromCity").value || "Hyderabad";
+  const destination = document.getElementById("destination").value;
+  const days = document.getElementById("days").value;
+  const travelType = document.getElementById("travelType").value;
+  const budgetStyle = document.getElementById("budgetStyle").value;
+  const foodPref = document.getElementById("foodPref").value;
 
-      const plan =
-`Sample ${days}-Day ${travelType} Plan
+  if (!destination || !days) {
+    alert("Please enter destination and number of days.");
+    return;
+  }
 
-From: ${fromCity}
-Destination: ${destination}
-Budget Style: ${budgetStyle}
-Food Preference: ${foodPref}
+  document.getElementById("tripResult").innerText = "Generating your trip plan...";
 
-Day 1:
-Arrival, airport exit, SIM/eSIM setup, currency check, hotel check-in and nearby food.
+  try {
+    const response = await fetch("/api/trip-plan", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        fromCity,
+        destination,
+        days,
+        travelType,
+        budgetStyle,
+        foodPref
+      })
+    });
 
-Day 2:
-Main sightseeing with moderate pace. Add rest breaks if travelling with family or senior citizens.
+    const data = await response.json();
 
-Day 3:
-Local attractions, shopping area and Indian/vegetarian food search.
-
-Day 4:
-Flexible day with backup plan for rain, tiredness or missed schedule.
-
-Day ${days}:
-Checkout, airport transfer, baggage checklist and return travel reminder.
-
-Upcoming AI version will generate a more detailed personalized itinerary.`;
-
-      document.getElementById("tripResult").innerText = plan;
+    if (data.success) {
+      document.getElementById("tripResult").innerText = data.trip.plan;
+    } else {
+      document.getElementById("tripResult").innerText =
+        data.message || "Unable to generate trip plan.";
     }
-
+  } catch (error) {
+    console.error(error);
+    document.getElementById("tripResult").innerText =
+      "Something went wrong while generating the trip plan.";
+  }
+}
     function calculateBudget() {
       const hotelCost = Number(document.getElementById("hotelCost").value || 0);
       const nights = Number(document.getElementById("nights").value || 0);
