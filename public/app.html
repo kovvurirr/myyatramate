@@ -11,19 +11,14 @@
       --blue: #0f4c81;
       --teal: #0f766e;
       --orange: #f97316;
-      --yellow: #facc15;
-      --light: #f8fafc;
       --muted: #64748b;
       --dark: #0f172a;
       --border: #e2e8f0;
-      --card: #ffffff;
       --danger: #dc2626;
       --green: #16a34a;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -185,10 +180,7 @@
       color: var(--blue);
     }
 
-    .content {
-      display: grid;
-      gap: 24px;
-    }
+    .content { display: grid; gap: 24px; }
 
     .card {
       background: white;
@@ -199,9 +191,7 @@
       display: none;
     }
 
-    .card.active {
-      display: block;
-    }
+    .card.active { display: block; }
 
     .card h2 {
       margin: 0 0 8px;
@@ -221,10 +211,7 @@
       gap: 14px;
     }
 
-    .form-group {
-      display: grid;
-      gap: 7px;
-    }
+    .form-group { display: grid; gap: 7px; }
 
     label {
       font-weight: 700;
@@ -232,9 +219,7 @@
       font-size: 14px;
     }
 
-    input,
-    select,
-    textarea {
+    input, select, textarea {
       width: 100%;
       padding: 14px 15px;
       border: 1px solid var(--border);
@@ -263,16 +248,12 @@
       cursor: pointer;
       background: var(--orange);
       color: white;
+      width: auto;
+      height: auto;
     }
 
-    .btn.secondary {
-      background: var(--navy);
-    }
-
-    .btn.light {
-      background: #e0f2fe;
-      color: var(--blue);
-    }
+    .btn.secondary { background: var(--navy); }
+    .btn.light { background: #e0f2fe; color: var(--blue); }
 
     .result {
       margin-top: 22px;
@@ -393,39 +374,16 @@
     }
 
     @media (max-width: 950px) {
-      .quick-panel {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      .layout {
-        grid-template-columns: 1fr;
-      }
-
-      .sidebar {
-        position: static;
-      }
-
-      .tools-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
+      .quick-panel { grid-template-columns: repeat(2, 1fr); }
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { position: static; }
+      .tools-grid { grid-template-columns: repeat(2, 1fr); }
     }
 
     @media (max-width: 600px) {
-      .topbar {
-        align-items: flex-start;
-        flex-direction: column;
-      }
-
-      .quick-panel,
-      .form-grid,
-      .tools-grid,
-      .readiness-box {
-        grid-template-columns: 1fr;
-      }
-
-      .score-circle {
-        margin: auto;
-      }
+      .topbar { align-items: flex-start; flex-direction: column; }
+      .quick-panel, .form-grid, .tools-grid, .readiness-box { grid-template-columns: 1fr; }
+      .score-circle { margin: auto; }
     }
   </style>
 </head>
@@ -451,31 +409,15 @@
 
   <main class="container">
     <section class="quick-panel">
-      <button class="quick-btn" onclick="showModule('plan')">
-        <span>🧭</span>
-        <strong>Plan Trip</strong>
-      </button>
-
-      <button class="quick-btn" onclick="showModule('landing')">
-        <span>🛬</span>
-        <strong>Landing Mode</strong>
-      </button>
-
-      <button class="quick-btn" onclick="showModule('emergency')">
-        <span>🆘</span>
-        <strong>Emergency</strong>
-      </button>
-
-      <button class="quick-btn" onclick="showModule('currency')">
-        <span>💱</span>
-        <strong>Currency</strong>
-      </button>
+      <button class="quick-btn" onclick="showModule('plan')"><span>🧭</span><strong>Plan Trip</strong></button>
+      <button class="quick-btn" onclick="showModule('landing')"><span>🛬</span><strong>Landing Mode</strong></button>
+      <button class="quick-btn" onclick="showModule('emergency')"><span>🆘</span><strong>Emergency</strong></button>
+      <button class="quick-btn" onclick="showModule('currency')"><span>💱</span><strong>Currency</strong></button>
     </section>
 
     <section class="layout">
       <aside class="sidebar">
         <div class="side-title">App Modules</div>
-
         <button class="menu-btn active" data-module="plan" onclick="showModule('plan')">🧭 Plan Trip</button>
         <button class="menu-btn" data-module="budget" onclick="showModule('budget')">💰 Budget Calculator</button>
         <button class="menu-btn" data-module="packing" onclick="showModule('packing')">🎒 Packing Checklist</button>
@@ -489,7 +431,6 @@
       </aside>
 
       <section class="content">
-        <!-- PLAN -->
         <div class="card active" id="plan">
           <h2>AI Trip Planner Demo</h2>
           <p class="card-desc">
@@ -553,7 +494,6 @@
           <div class="result" id="tripResult">Your generated trip plan will appear here.</div>
         </div>
 
-        <!-- BUDGET -->
         <div class="card" id="budget">
           <h2>Smart Budget Calculator</h2>
           <p class="card-desc">
@@ -609,13 +549,9 @@
           <div class="result" id="budgetResult">Budget estimate will appear here.</div>
         </div>
 
-        <!-- PACKING -->
         <div class="card" id="packing">
           <h2>Packing Checklist</h2>
-          <p class="card-desc">
-            A practical packing checklist for Indian travellers. Later this will become AI-generated based on destination and weather.
-          </p>
-
+          <p class="card-desc">A practical packing checklist for Indian travellers. Later this will become AI-generated based on destination and weather.</p>
           <div class="checklist">
             <label class="check-item"><input type="checkbox" /> Passport / ID Proof</label>
             <label class="check-item"><input type="checkbox" /> Flight / Train / Bus Tickets</label>
@@ -630,70 +566,27 @@
           </div>
         </div>
 
-        <!-- VISA -->
         <div class="card" id="visa">
           <h2>Visa & Document Checklist</h2>
-          <p class="card-desc">
-            Basic checklist for international travel. Later we will add country-wise checklists and visa-ready PDF.
-          </p>
-
+          <p class="card-desc">Basic checklist for international travel. Later we will add country-wise checklists and visa-ready PDF.</p>
           <div class="tools-grid">
-            <div class="tool-card">
-              <div class="icon">🛂</div>
-              <h3>Passport</h3>
-              <p>Check passport validity. Many countries require 6 months validity from travel date.</p>
-            </div>
-
-            <div class="tool-card">
-              <div class="icon">📄</div>
-              <h3>Visa</h3>
-              <p>Upload visa or check whether visa/eVisa/arrival card is required for your destination.</p>
-            </div>
-
-            <div class="tool-card">
-              <div class="icon">🏨</div>
-              <h3>Hotel Booking</h3>
-              <p>Keep confirmed hotel voucher ready for immigration and check-in.</p>
-            </div>
-
-            <div class="tool-card">
-              <div class="icon">🎫</div>
-              <h3>Return Ticket</h3>
-              <p>Many countries may ask for return/onward ticket during immigration.</p>
-            </div>
-
-            <div class="tool-card">
-              <div class="icon">🛡️</div>
-              <h3>Insurance</h3>
-              <p>Carry travel insurance, especially for Schengen, business and family trips.</p>
-            </div>
-
-            <div class="tool-card">
-              <div class="icon">💼</div>
-              <h3>Business Docs</h3>
-              <p>Invitation letter, company letter, expo pass, meeting schedule and company profile.</p>
-            </div>
+            <div class="tool-card"><div class="icon">🛂</div><h3>Passport</h3><p>Check passport validity. Many countries require 6 months validity from travel date.</p></div>
+            <div class="tool-card"><div class="icon">📄</div><h3>Visa</h3><p>Upload visa or check whether visa/eVisa/arrival card is required for your destination.</p></div>
+            <div class="tool-card"><div class="icon">🏨</div><h3>Hotel Booking</h3><p>Keep confirmed hotel voucher ready for immigration and check-in.</p></div>
+            <div class="tool-card"><div class="icon">🎫</div><h3>Return Ticket</h3><p>Many countries may ask for return/onward ticket during immigration.</p></div>
+            <div class="tool-card"><div class="icon">🛡️</div><h3>Insurance</h3><p>Carry travel insurance, especially for Schengen, business and family trips.</p></div>
+            <div class="tool-card"><div class="icon">💼</div><h3>Business Docs</h3><p>Invitation letter, company letter, expo pass, meeting schedule and company profile.</p></div>
           </div>
         </div>
 
-        <!-- READINESS -->
         <div class="card" id="readiness">
           <h2>Trip Readiness Score</h2>
-          <p class="card-desc">
-            This score tells the traveller how ready they are before departure.
-          </p>
-
+          <p class="card-desc">This score tells the traveller how ready they are before departure.</p>
           <div class="readiness-box">
-            <div class="score-circle">
-              <div class="score-inner">76%</div>
-            </div>
-
+            <div class="score-circle"><div class="score-inner">76%</div></div>
             <div>
               <h3 style="margin-top:0;color:var(--navy);">Your trip is almost ready</h3>
-              <p style="color:var(--muted);line-height:1.7;">
-                Pending items: Travel insurance, forex/currency planning, emergency contact and offline document pack.
-              </p>
-
+              <p style="color:var(--muted);line-height:1.7;">Pending items: Travel insurance, forex/currency planning, emergency contact and offline document pack.</p>
               <div class="checklist">
                 <div class="check-item">✅ Itinerary created</div>
                 <div class="check-item">✅ Hotel details added</div>
@@ -705,59 +598,22 @@
           </div>
         </div>
 
-        <!-- LANDING -->
         <div class="card" id="landing">
           <h2>Landing Mode</h2>
-          <p class="card-desc">
-            Use this mode immediately after reaching the destination airport or railway station.
-          </p>
-
+          <p class="card-desc">Use this mode immediately after reaching the destination airport or railway station.</p>
           <div class="tools-grid">
-            <div class="tool-card">
-              <div class="icon">🏨</div>
-              <h3>Take Me to Hotel</h3>
-              <p>Show hotel address, local language taxi phrase and map route.</p>
-            </div>
-
-            <div class="tool-card">
-              <div class="icon">🚕</div>
-              <h3>Airport Taxi Help</h3>
-              <p>Find official taxi, ride apps and estimated fare guidance.</p>
-            </div>
-
-            <div class="tool-card">
-              <div class="icon">📶</div>
-              <h3>SIM / eSIM</h3>
-              <p>Connectivity guidance and airport SIM/eSIM recommendations.</p>
-            </div>
-
-            <div class="tool-card">
-              <div class="icon">💱</div>
-              <h3>Currency Quick Check</h3>
-              <p>Convert local currency into INR before paying.</p>
-            </div>
-
-            <div class="tool-card">
-              <div class="icon">🗣️</div>
-              <h3>Taxi Phrase</h3>
-              <p>“Please take me to this hotel” shown in local language.</p>
-            </div>
-
-            <div class="tool-card">
-              <div class="icon">🆘</div>
-              <h3>Emergency</h3>
-              <p>Police, ambulance, embassy, hospital and family contacts.</p>
-            </div>
+            <div class="tool-card"><div class="icon">🏨</div><h3>Take Me to Hotel</h3><p>Show hotel address, local language taxi phrase and map route.</p></div>
+            <div class="tool-card"><div class="icon">🚕</div><h3>Airport Taxi Help</h3><p>Find official taxi, ride apps and estimated fare guidance.</p></div>
+            <div class="tool-card"><div class="icon">📶</div><h3>SIM / eSIM</h3><p>Connectivity guidance and airport SIM/eSIM recommendations.</p></div>
+            <div class="tool-card"><div class="icon">💱</div><h3>Currency Quick Check</h3><p>Convert local currency into INR before paying.</p></div>
+            <div class="tool-card"><div class="icon">🗣️</div><h3>Taxi Phrase</h3><p>“Please take me to this hotel” shown in local language.</p></div>
+            <div class="tool-card"><div class="icon">🆘</div><h3>Emergency</h3><p>Police, ambulance, embassy, hospital and family contacts.</p></div>
           </div>
         </div>
 
-        <!-- TRANSLATOR -->
         <div class="card" id="translator">
           <h2>Travel Translator Demo</h2>
-          <p class="card-desc">
-            Phrasebook demo for common travel situations. Later we will add live voice and camera translation.
-          </p>
-
+          <p class="card-desc">Phrasebook demo for common travel situations. Later we will add live voice and camera translation.</p>
           <div class="form-grid">
             <div class="form-group">
               <label>Select phrase</label>
@@ -769,7 +625,6 @@
                 <option>I am lost. Please help me.</option>
               </select>
             </div>
-
             <div class="form-group">
               <label>Target language</label>
               <select id="targetLang">
@@ -781,27 +636,15 @@
               </select>
             </div>
           </div>
-
-          <div class="action">
-            <button class="btn" onclick="translatePhrase()">Show Sample Translation</button>
-          </div>
-
+          <div class="action"><button class="btn" onclick="translatePhrase()">Show Sample Translation</button></div>
           <div class="result" id="translatorResult">Translation will appear here.</div>
         </div>
 
-        <!-- CURRENCY -->
         <div class="card" id="currency">
           <h2>Currency Converter</h2>
-          <p class="card-desc">
-            Demo converter. For now, rates are sample rates. Later we will connect live currency API.
-          </p>
-
+          <p class="card-desc">Demo converter. For now, rates are sample rates. Later we will connect live currency API.</p>
           <div class="form-grid">
-            <div class="form-group">
-              <label>Amount in foreign currency</label>
-              <input type="number" id="foreignAmount" placeholder="100" />
-            </div>
-
+            <div class="form-group"><label>Amount in foreign currency</label><input type="number" id="foreignAmount" placeholder="100" /></div>
             <div class="form-group">
               <label>Currency</label>
               <select id="currencyType">
@@ -813,21 +656,13 @@
               </select>
             </div>
           </div>
-
-          <div class="action">
-            <button class="btn" onclick="convertCurrency()">Convert to INR</button>
-          </div>
-
+          <div class="action"><button class="btn" onclick="convertCurrency()">Convert to INR</button></div>
           <div class="result" id="currencyResult">Converted amount will appear here.</div>
         </div>
 
-        <!-- EXPENSE -->
         <div class="card" id="expense">
           <h2>Expense Tracker</h2>
-          <p class="card-desc">
-            Add travel expenses and track spending. This demo stores entries only until page refresh.
-          </p>
-
+          <p class="card-desc">Add travel expenses and track spending. This demo stores entries only until page refresh.</p>
           <div class="form-grid">
             <div class="form-group">
               <label>Expense category</label>
@@ -840,78 +675,32 @@
                 <option>Other</option>
               </select>
             </div>
-
-            <div class="form-group">
-              <label>Amount in INR</label>
-              <input type="number" id="expenseAmount" placeholder="1500" />
-            </div>
+            <div class="form-group"><label>Amount in INR</label><input type="number" id="expenseAmount" placeholder="1500" /></div>
           </div>
-
-          <div class="action">
-            <button class="btn" onclick="addExpense()">Add Expense</button>
-          </div>
-
+          <div class="action"><button class="btn" onclick="addExpense()">Add Expense</button></div>
           <div class="result" id="expenseResult">No expenses added yet.</div>
         </div>
 
-        <!-- EMERGENCY -->
         <div class="card" id="emergency">
           <h2>Emergency & I Am Lost Mode</h2>
-          <p class="card-desc">
-            This screen should always be easy to access while travelling.
-          </p>
-
+          <p class="card-desc">This screen should always be easy to access while travelling.</p>
           <button class="sos-btn" onclick="showSOS()">🆘 Emergency SOS</button>
-
           <div class="emergency-box">
             <strong>I Am Lost Message</strong>
-            <p>
-              I am lost. Please help me reach my hotel. My hotel address is saved in this app.
-              Please call my emergency contact or help me find a safe taxi/police station.
-            </p>
+            <p>I am lost. Please help me reach my hotel. My hotel address is saved in this app. Please call my emergency contact or help me find a safe taxi/police station.</p>
           </div>
-
           <div class="tools-grid">
-            <div class="tool-card">
-              <div class="icon">👨‍👩‍👧</div>
-              <h3>Family Contact</h3>
-              <p>One-tap call or WhatsApp to family contact.</p>
-            </div>
-
-            <div class="tool-card">
-              <div class="icon">🏥</div>
-              <h3>Nearby Hospital</h3>
-              <p>Open map search for hospitals nearby.</p>
-            </div>
-
-            <div class="tool-card">
-              <div class="icon">🚔</div>
-              <h3>Police Station</h3>
-              <p>Find nearest police station or local emergency number.</p>
-            </div>
-
-            <div class="tool-card">
-              <div class="icon">🇮🇳</div>
-              <h3>Indian Embassy</h3>
-              <p>For international trips, show embassy contact and address.</p>
-            </div>
-
-            <div class="tool-card">
-              <div class="icon">📍</div>
-              <h3>Share Location</h3>
-              <p>Send current location to family or trip group.</p>
-            </div>
-
-            <div class="tool-card">
-              <div class="icon">🛂</div>
-              <h3>Lost Passport</h3>
-              <p>Step-by-step lost passport support and embassy guidance.</p>
-            </div>
+            <div class="tool-card"><div class="icon">👨‍👩‍👧</div><h3>Family Contact</h3><p>One-tap call or WhatsApp to family contact.</p></div>
+            <div class="tool-card"><div class="icon">🏥</div><h3>Nearby Hospital</h3><p>Open map search for hospitals nearby.</p></div>
+            <div class="tool-card"><div class="icon">🚔</div><h3>Police Station</h3><p>Find nearest police station or local emergency number.</p></div>
+            <div class="tool-card"><div class="icon">🇮🇳</div><h3>Indian Embassy</h3><p>For international trips, show embassy contact and address.</p></div>
+            <div class="tool-card"><div class="icon">📍</div><h3>Share Location</h3><p>Send current location to family or trip group.</p></div>
+            <div class="tool-card"><div class="icon">🛂</div><h3>Lost Passport</h3><p>Step-by-step lost passport support and embassy guidance.</p></div>
           </div>
         </div>
 
         <div class="bottom-note">
-          <strong>Developer note:</strong> This version has backend-connected Trip Planner and Budget Calculator.
+          <strong>Developer note:</strong> This corrected version has clean Plan Trip fields and a separate backend-connected Budget Calculator.
           Next we will connect Expense Tracker to backend, then add admin protection and real AI.
         </div>
       </section>
@@ -922,20 +711,13 @@
     let expenses = [];
 
     function showModule(moduleId) {
-      document.querySelectorAll(".card").forEach(card => {
-        card.classList.remove("active");
-      });
-
-      document.querySelectorAll(".menu-btn").forEach(btn => {
-        btn.classList.remove("active");
-      });
+      document.querySelectorAll(".card").forEach(card => card.classList.remove("active"));
+      document.querySelectorAll(".menu-btn").forEach(btn => btn.classList.remove("active"));
 
       document.getElementById(moduleId).classList.add("active");
 
       const menuButton = document.querySelector(`[data-module="${moduleId}"]`);
-      if (menuButton) {
-        menuButton.classList.add("active");
-      }
+      if (menuButton) menuButton.classList.add("active");
 
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -958,17 +740,8 @@
       try {
         const response = await fetch("/api/trip-plan", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            fromCity,
-            destination,
-            days,
-            travelType,
-            budgetStyle,
-            foodPref
-          })
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ fromCity, destination, days, travelType, budgetStyle, foodPref })
         });
 
         const data = await response.json();
@@ -976,13 +749,11 @@
         if (data.success) {
           document.getElementById("tripResult").innerText = data.trip.plan;
         } else {
-          document.getElementById("tripResult").innerText =
-            data.message || "Unable to generate trip plan.";
+          document.getElementById("tripResult").innerText = data.message || "Unable to generate trip plan.";
         }
       } catch (error) {
         console.error(error);
-        document.getElementById("tripResult").innerText =
-          "Something went wrong while generating the trip plan.";
+        document.getElementById("tripResult").innerText = "Something went wrong while generating the trip plan.";
       }
     }
 
@@ -1001,40 +772,25 @@
         return;
       }
 
-      document.getElementById("budgetResult").innerText =
-        "Calculating budget estimate...";
+      document.getElementById("budgetResult").innerText = "Calculating budget estimate...";
 
       try {
         const response = await fetch("/api/budget", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            destination,
-            travellers,
-            hotelCost,
-            nights,
-            foodCost,
-            transportCost,
-            ticketCost,
-            shoppingCost
-          })
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ destination, travellers, hotelCost, nights, foodCost, transportCost, ticketCost, shoppingCost })
         });
 
         const data = await response.json();
 
         if (data.success) {
-          document.getElementById("budgetResult").innerText =
-            data.budget.budgetSummary;
+          document.getElementById("budgetResult").innerText = data.budget.budgetSummary;
         } else {
-          document.getElementById("budgetResult").innerText =
-            data.message || "Unable to calculate budget.";
+          document.getElementById("budgetResult").innerText = data.message || "Unable to calculate budget.";
         }
       } catch (error) {
         console.error(error);
-        document.getElementById("budgetResult").innerText =
-          "Something went wrong while calculating budget.";
+        document.getElementById("budgetResult").innerText = "Something went wrong while calculating budget.";
       }
     }
 
@@ -1057,20 +813,11 @@ Translation feature will be connected in the next version using a translation AP
       const amount = Number(document.getElementById("foreignAmount").value || 0);
       const currency = document.getElementById("currencyType").value;
 
-      const sampleRates = {
-        AED: 22.7,
-        USD: 83.2,
-        EUR: 90.5,
-        THB: 2.3,
-        JPY: 0.56
-      };
-
+      const sampleRates = { AED: 22.7, USD: 83.2, EUR: 90.5, THB: 2.3, JPY: 0.56 };
       const converted = amount * sampleRates[currency];
 
       document.getElementById("currencyResult").innerText =
-`${amount} ${currency} is approximately ₹${converted.toLocaleString("en-IN", {
-        maximumFractionDigits: 2
-      })}
+`${amount} ${currency} is approximately ₹${converted.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
 
 Note: This is a demo rate. Live currency API will be connected later.`;
     }
@@ -1085,15 +832,12 @@ Note: This is a demo rate. Live currency API will be connected later.`;
       }
 
       expenses.push({ category, amount });
-
       const total = expenses.reduce((sum, item) => sum + item.amount, 0);
 
       let list = "Expenses Added:\n\n";
-
       expenses.forEach((item, index) => {
         list += `${index + 1}. ${item.category}: ₹${item.amount.toLocaleString("en-IN")}\n`;
       });
-
       list += `\nTotal Spend: ₹${total.toLocaleString("en-IN")}`;
 
       document.getElementById("expenseResult").innerText = list;
