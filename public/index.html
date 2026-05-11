@@ -4,91 +4,742 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MyYatraMate - Your AI Travel Swiss Knife</title>
+  <meta name="description" content="MyYatraMate is an AI travel companion for Indian travellers. Plan trips, manage documents, translate locally, track expenses, compare prices, and stay safe." />
+
   <style>
+    :root {
+      --navy: #071a33;
+      --blue: #0f4c81;
+      --teal: #0f766e;
+      --orange: #f97316;
+      --yellow: #facc15;
+      --light: #f8fafc;
+      --muted: #64748b;
+      --dark: #0f172a;
+      --card: #ffffff;
+      --border: #e2e8f0;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, #07203f, #0f766e);
-      color: white;
-      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #ffffff;
+      color: var(--dark);
+    }
+
+    a {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .container {
+      width: min(1180px, 92%);
+      margin: auto;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav {
+      height: 74px;
       display: flex;
       align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 24px;
+      justify-content: space-between;
     }
 
-    .card {
-      max-width: 850px;
-      background: rgba(255, 255, 255, 0.12);
-      padding: 50px;
-      border-radius: 28px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
-      backdrop-filter: blur(10px);
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      font-size: 24px;
+      color: var(--navy);
     }
 
-    h1 {
-      font-size: 56px;
-      margin-bottom: 16px;
-    }
-
-    h2 {
-      font-size: 26px;
-      margin-bottom: 24px;
-      color: #facc15;
-    }
-
-    p {
-      font-size: 20px;
-      line-height: 1.6;
-      color: #e5e7eb;
-    }
-
-    .features {
-      margin-top: 34px;
+    .logo-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--blue), var(--teal));
+      color: white;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 14px;
+      place-items: center;
+      font-size: 22px;
     }
 
-    .feature {
-      background: rgba(255, 255, 255, 0.15);
-      padding: 16px;
-      border-radius: 16px;
-      font-size: 16px;
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      color: #334155;
+      font-weight: 600;
+      font-size: 15px;
+    }
+
+    .nav-cta {
+      padding: 12px 20px;
+      border-radius: 999px;
+      background: var(--navy);
+      color: white;
+      font-weight: 700;
+    }
+
+    .hero {
+      background:
+        radial-gradient(circle at top right, rgba(15, 118, 110, 0.25), transparent 30%),
+        radial-gradient(circle at bottom left, rgba(249, 115, 22, 0.18), transparent 30%),
+        linear-gradient(135deg, #071a33, #0f4c81 55%, #0f766e);
+      color: white;
+      padding: 86px 0 76px;
+      overflow: hidden;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 46px;
+      align-items: center;
     }
 
     .badge {
-      display: inline-block;
-      margin-bottom: 20px;
-      padding: 10px 18px;
-      background: #facc15;
-      color: #111827;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
       border-radius: 999px;
-      font-weight: bold;
+      background: rgba(250, 204, 21, 0.15);
+      color: #fde68a;
+      border: 1px solid rgba(250, 204, 21, 0.35);
+      font-weight: 700;
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      font-size: clamp(42px, 6vw, 72px);
+      line-height: 1.05;
+      margin: 0 0 22px;
+      letter-spacing: -2px;
+    }
+
+    .hero p {
+      font-size: 20px;
+      line-height: 1.7;
+      color: #e2e8f0;
+      margin: 0 0 32px;
+      max-width: 680px;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-bottom: 34px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 15px 24px;
+      border-radius: 999px;
+      font-weight: 800;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background: var(--orange);
+      color: white;
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.12);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+    }
+
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      max-width: 660px;
+    }
+
+    .stat {
+      padding: 18px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 24px;
+      margin-bottom: 4px;
+    }
+
+    .stat span {
+      color: #cbd5e1;
+      font-size: 14px;
+    }
+
+    .phone-card {
+      background: white;
+      color: var(--dark);
+      border-radius: 36px;
+      padding: 22px;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.35);
+      transform: rotate(2deg);
+    }
+
+    .phone-top {
+      background: linear-gradient(135deg, var(--navy), var(--teal));
+      color: white;
+      border-radius: 28px;
+      padding: 24px;
+    }
+
+    .phone-top small {
+      color: #bae6fd;
+      font-weight: 700;
+    }
+
+    .phone-top h3 {
+      margin: 10px 0 8px;
+      font-size: 28px;
+    }
+
+    .phone-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .phone-tool {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 16px;
+      font-weight: 700;
+    }
+
+    .phone-tool span {
+      display: block;
+      font-size: 26px;
+      margin-bottom: 8px;
+    }
+
+    section {
+      padding: 78px 0;
+    }
+
+    .section-title {
+      text-align: center;
+      max-width: 780px;
+      margin: 0 auto 44px;
+    }
+
+    .section-title h2 {
+      font-size: clamp(32px, 4vw, 48px);
+      margin: 0 0 16px;
+      color: var(--navy);
+      letter-spacing: -1px;
+    }
+
+    .section-title p {
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 18px;
+      margin: 0;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 22px;
+    }
+
+    .feature-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 26px;
+      padding: 28px;
+      box-shadow: 0 16px 40px rgba(15, 23, 42, 0.06);
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 22px 55px rgba(15, 23, 42, 0.10);
+    }
+
+    .feature-icon {
+      width: 54px;
+      height: 54px;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      font-size: 26px;
+      background: #e0f2fe;
+      margin-bottom: 18px;
+    }
+
+    .feature-card h3 {
+      margin: 0 0 10px;
+      font-size: 22px;
+      color: var(--navy);
+    }
+
+    .feature-card p {
+      color: var(--muted);
+      line-height: 1.65;
+      margin: 0;
+    }
+
+    .dark-section {
+      background: #071a33;
+      color: white;
+    }
+
+    .dark-section .section-title h2 {
+      color: white;
+    }
+
+    .dark-section .section-title p {
+      color: #cbd5e1;
+    }
+
+    .module-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .module {
+      padding: 22px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 22px;
+    }
+
+    .module strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 18px;
+    }
+
+    .module span {
+      color: #cbd5e1;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .how {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+      counter-reset: step;
+    }
+
+    .step {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 26px;
+      position: relative;
+    }
+
+    .step::before {
+      counter-increment: step;
+      content: counter(step);
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      background: var(--orange);
+      color: white;
+      border-radius: 50%;
+      font-weight: 800;
+      margin-bottom: 18px;
+    }
+
+    .step h3 {
+      margin: 0 0 10px;
+      color: var(--navy);
+    }
+
+    .step p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .cta-box {
+      background:
+        radial-gradient(circle at top left, rgba(250,204,21,0.22), transparent 32%),
+        linear-gradient(135deg, #0f4c81, #0f766e);
+      color: white;
+      border-radius: 34px;
+      padding: 50px;
+      display: grid;
+      grid-template-columns: 1fr 0.9fr;
+      gap: 34px;
+      align-items: center;
+    }
+
+    .cta-box h2 {
+      font-size: 42px;
+      margin: 0 0 14px;
+    }
+
+    .cta-box p {
+      color: #e2e8f0;
+      line-height: 1.7;
+      font-size: 18px;
+      margin: 0;
+    }
+
+    .early-form {
+      background: white;
+      padding: 24px;
+      border-radius: 24px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .early-form input,
+    .early-form select {
+      width: 100%;
+      padding: 15px 16px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      font-size: 15px;
+    }
+
+    .early-form button {
+      padding: 15px;
+      border-radius: 14px;
+      border: none;
+      background: var(--orange);
+      color: white;
+      font-weight: 800;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    footer {
+      background: #020617;
+      color: #cbd5e1;
+      padding: 36px 0;
+      text-align: center;
+    }
+
+    footer strong {
+      color: white;
+    }
+
+    @media (max-width: 900px) {
+      .nav-links {
+        display: none;
+      }
+
+      .hero-grid,
+      .cta-box {
+        grid-template-columns: 1fr;
+      }
+
+      .features {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .module-grid,
+      .how {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .phone-card {
+        transform: none;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .hero {
+        padding: 58px 0;
+      }
+
+      .hero-stats,
+      .features,
+      .module-grid,
+      .how {
+        grid-template-columns: 1fr;
+      }
+
+      .cta-box {
+        padding: 30px;
+      }
+
+      .cta-box h2 {
+        font-size: 32px;
+      }
+
+      h1 {
+        letter-spacing: -1px;
+      }
     }
   </style>
 </head>
-<body>
-  <div class="card">
-    <div class="badge">Coming Soon</div>
-    <h1>MyYatraMate</h1>
-    <h2>Your AI Travel Swiss Knife</h2>
-    <p>
-      Plan smarter, land confidently, translate locally, explore places,
-      compare shopping prices, track expenses, and stay safe while travelling.
-    </p>
 
-    <div class="features">
-      <div class="feature">AI Trip Planner</div>
-      <div class="feature">Landing Mode</div>
-      <div class="feature">Live Translator</div>
-      <div class="feature">Emergency SOS</div>
-      <div class="feature">Currency Converter</div>
-      <div class="feature">Buy or Skip</div>
-      <div class="feature">Food Lens</div>
-      <div class="feature">Visa Checklist</div>
+<body>
+  <header>
+    <div class="container nav">
+      <a href="#" class="logo">
+        <span class="logo-icon">✈</span>
+        <span>MyYatraMate</span>
+      </a>
+
+      <nav class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#modules">Modules</a>
+        <a href="#how">How it works</a>
+        <a href="#early">Early Access</a>
+        <a class="nav-cta" href="#early">Join Waitlist</a>
+      </nav>
     </div>
-  </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container hero-grid">
+        <div>
+          <div class="badge">🚀 Coming Soon for Indian Travellers</div>
+          <h1>Your AI Travel Swiss Knife</h1>
+          <p>
+            Plan smarter, land confidently, translate locally, explore places,
+            compare shopping prices, track expenses and stay safe — all from one intelligent travel companion.
+          </p>
+
+          <div class="hero-actions">
+            <a href="#early" class="btn btn-primary">Join Early Access</a>
+            <a href="#features" class="btn btn-secondary">Explore Features</a>
+          </div>
+
+          <div class="hero-stats">
+            <div class="stat">
+              <strong>24+</strong>
+              <span>Travel tools planned</span>
+            </div>
+            <div class="stat">
+              <strong>AI</strong>
+              <span>Trip planning assistant</span>
+            </div>
+            <div class="stat">
+              <strong>India</strong>
+              <span>Family-first travel focus</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="phone-card">
+          <div class="phone-top">
+            <small>Landing Mode</small>
+            <h3>Welcome to Dubai</h3>
+            <p style="margin:0;color:#dbeafe;">
+              Need help after landing? Your hotel route, currency, emergency contacts and translator are ready.
+            </p>
+          </div>
+
+          <div class="phone-grid">
+            <div class="phone-tool"><span>🏨</span>Take me to hotel</div>
+            <div class="phone-tool"><span>🆘</span>Emergency SOS</div>
+            <div class="phone-tool"><span>💱</span>Currency</div>
+            <div class="phone-tool"><span>🗣️</span>Translate</div>
+            <div class="phone-tool"><span>🍛</span>Find food</div>
+            <div class="phone-tool"><span>🛍️</span>Buy or Skip</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="features">
+      <div class="container">
+        <div class="section-title">
+          <h2>Built for real travel situations</h2>
+          <p>
+            MyYatraMate is designed for travellers who need more than a simple itinerary.
+            It helps before departure, after landing, during exploration, while shopping, and in emergencies.
+          </p>
+        </div>
+
+        <div class="features">
+          <div class="feature-card">
+            <div class="feature-icon">🧭</div>
+            <h3>AI Trip Planner</h3>
+            <p>Create day-wise plans based on budget, family, senior citizens, food preferences, travel pace and purpose.</p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">🛬</div>
+            <h3>Landing Mode</h3>
+            <p>After arrival, instantly access hotel route, local transport, taxi phrases, SIM guidance and emergency help.</p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">🗣️</div>
+            <h3>Live Translator</h3>
+            <p>Translate phrases, menus, signboards and conversations so travellers can communicate with confidence.</p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">📸</div>
+            <h3>Snap Guide</h3>
+            <p>Take a photo of a monument or place and get history, tips, timings, etiquette and nearby attractions.</p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">🛍️</div>
+            <h3>Buy or Skip</h3>
+            <p>Compare product prices with India, convert currency, check savings, warranty, customs and baggage risk.</p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">🆘</div>
+            <h3>Safety & SOS</h3>
+            <p>Access emergency contacts, lost mode, embassy info, hospital finder, family check-in and live location sharing.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="modules" class="dark-section">
+      <div class="container">
+        <div class="section-title">
+          <h2>One app. Complete travel toolkit.</h2>
+          <p>
+            A Swiss knife experience covering planning, documents, translation, food, shopping, safety, expenses and return travel.
+          </p>
+        </div>
+
+        <div class="module-grid">
+          <div class="module"><strong>Plan</strong><span>AI itinerary, budget, visa checklist, packing.</span></div>
+          <div class="module"><strong>Land</strong><span>Airport exit, hotel route, SIM, forex, taxi help.</span></div>
+          <div class="module"><strong>Talk</strong><span>Phrasebook, live translator, menu and sign translation.</span></div>
+          <div class="module"><strong>Explore</strong><span>Photo guide, monument details, daily travel dashboard.</span></div>
+          <div class="module"><strong>Eat</strong><span>Food lens, veg/Jain/halal support, Indian food finder.</span></div>
+          <div class="module"><strong>Buy</strong><span>Product scanner, price comparison, buy/skip score.</span></div>
+          <div class="module"><strong>Spend</strong><span>Currency converter, expense tracker, receipt scanner.</span></div>
+          <div class="module"><strong>Safe</strong><span>SOS, lost mode, embassy, hospital and family alert.</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="how">
+      <div class="container">
+        <div class="section-title">
+          <h2>How MyYatraMate works</h2>
+          <p>
+            The app follows the traveller’s real journey — from planning to return.
+          </p>
+        </div>
+
+        <div class="how">
+          <div class="step">
+            <h3>Create your trip</h3>
+            <p>Enter destination, dates, travellers, budget, food preference and travel purpose.</p>
+          </div>
+
+          <div class="step">
+            <h3>Prepare smartly</h3>
+            <p>Get visa checklist, document vault, packing list, budget and trip readiness score.</p>
+          </div>
+
+          <div class="step">
+            <h3>Land confidently</h3>
+            <p>Use landing mode for hotel route, local transport, translator, currency and emergency help.</p>
+          </div>
+
+          <div class="step">
+            <h3>Travel safely</h3>
+            <p>Use food lens, snap guide, buy/skip, expense tracker, SOS and return reminders.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="early">
+      <div class="container">
+        <div class="cta-box">
+          <div>
+            <h2>Join the early access list</h2>
+            <p>
+              MyYatraMate is currently under development. Join the early list to receive updates,
+              beta access and launch offers.
+            </p>
+          </div>
+
+          <form class="early-form" onsubmit="handleEarlyAccess(event)">
+            <input type="text" id="name" placeholder="Your name" required />
+            <input type="email" id="email" placeholder="Email address" required />
+            <input type="tel" id="phone" placeholder="Phone number / WhatsApp" />
+            <select id="travellerType">
+              <option value="">Traveller type</option>
+              <option>Family Traveller</option>
+              <option>Business Traveller</option>
+              <option>Pilgrimage Traveller</option>
+              <option>Student / Solo Traveller</option>
+              <option>Travel Agent / Partner</option>
+            </select>
+            <button type="submit">Request Early Access</button>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p><strong>MyYatraMate</strong> — Your AI Travel Swiss Knife</p>
+      <p>© 2026 MyYatraMate. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    function handleEarlyAccess(event) {
+      event.preventDefault();
+
+      const name = document.getElementById("name").value;
+      const email = document.getElementById("email").value;
+      const phone = document.getElementById("phone").value;
+      const travellerType = document.getElementById("travellerType").value;
+
+      const message =
+        "Early Access Request%0A%0A" +
+        "Name: " + encodeURIComponent(name) + "%0A" +
+        "Email: " + encodeURIComponent(email) + "%0A" +
+        "Phone: " + encodeURIComponent(phone) + "%0A" +
+        "Traveller Type: " + encodeURIComponent(travellerType);
+
+      alert("Thank you! Your early access interest is recorded. In the next version, we will connect this form to email/database.");
+
+      console.log({
+        name,
+        email,
+        phone,
+        travellerType
+      });
+    }
+  </script>
+</body>
+</html>
 </body>
 </html>
