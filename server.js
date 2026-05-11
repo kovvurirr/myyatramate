@@ -15,7 +15,7 @@ app.use(express.static(path.join(__dirname, "public")));
 const dataDir = path.join(__dirname, "data");
 const leadsFile = path.join(dataDir, "early-access-leads.json");
 const tripsFile = path.join(dataDir, "trip-plans.json");
-
+const budgetsFile = path.join(dataDir, "budgets.json");
 if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir);
 }
