@@ -184,6 +184,108 @@ app.post("/api/trip-plan", (req, res) => {
   }
 });
 
+// Budget calculator API
+app.post("/api/budget", (req, res) => {
+  try {
+    const {
+      destination,
+      travellers,
+      hotelCost,
+      nights,
+      foodCost,
+      transportCost,
+      ticketCost,
+      shoppingCost
+    } = req.body;
+
+    const numTravellers = Number(travellers) || 1;
+    const numHotelCost = Number(hotelCost) || 0;
+    const numNights = Number(nights) || 0;
+    const numFoodCost = Number(foodCost) || 0;
+    const numTransportCost = Number(transportCost) || 0;
+    const numTicketCost = Number(ticketCost) || 0;
+    const numShoppingCost = Number(shoppingCost) || 0;
+
+    if (!destination) {
+      return res.status(400).json({
+        success: false,
+        message: "Destination is required."
+      });
+    }
+
+    const hotelTotal = numHotelCost * numNights;
+    const foodTotal = numFoodCost * (numNights + 1) * numTravellers;
+
+    const subtotal =
+      hotelTotal +
+      foodTotal +
+      numTransportCost +
+      numTicketCost +
+      numShoppingCost;
+
+    const emergencyBuffer = subtotal * 0.12;
+    const grandTotal = subtotal + emergencyBuffer;
+    const perPerson = grandTotal / numTravellers;
+
+    const budgetSummary =
+`MyYatraMate Budget Estimate
+
+Destination: ${destination}
+Travellers: ${numTravellers}
+Nights: ${numNights}
+
+Hotel Total: ₹${hotelTotal.toLocaleString("en-IN")}
+Food Total: ₹${foodTotal.toLocaleString("en-IN")}
+Local Transport: ₹${numTransportCost.toLocaleString("en-IN")}
+Sightseeing / Tickets: ₹${numTicketCost.toLocaleString("en-IN")}
+Shopping Buffer: ₹${numShoppingCost.toLocaleString("en-IN")}
+Emergency Buffer 12%: ₹${Math.round(emergencyBuffer).toLocaleString("en-IN")}
+
+Estimated Total Budget: ₹${Math.round(grandTotal).toLocaleString("en-IN")}
+Approx Cost Per Person: ₹${Math.round(perPerson).toLocaleString("en-IN")}
+
+Note:
+This is a practical estimate. Actual cost may vary based on travel dates, hotel category, exchange rate, local transport and personal shopping.`;
+
+    const budgets = JSON.parse(fs.readFileSync(budgetsFile, "utf8"));
+
+    const newBudget = {
+      id: Date.now(),
+      destination,
+      travellers: numTravellers,
+      hotelCost: numHotelCost,
+      nights: numNights,
+      foodCost: numFoodCost,
+      transportCost: numTransportCost,
+      ticketCost: numTicketCost,
+      shoppingCost: numShoppingCost,
+      hotelTotal,
+      foodTotal,
+      emergencyBuffer,
+      grandTotal,
+      perPerson,
+      budgetSummary,
+      createdAt: new Date().toISOString()
+    };
+
+    budgets.push(newBudget);
+    fs.writeFileSync(budgetsFile, JSON.stringify(budgets, null, 2));
+
+    res.json({
+      success: true,
+      message: "Budget calculated successfully.",
+      budget: newBudget
+    });
+  } catch (error) {
+    console.error("Budget error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Unable to calculate budget."
+    });
+  }
+});
+
 // Admin leads view
 app.get("/admin/leads", (req, res) => {
   try {
