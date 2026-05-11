@@ -28,6 +28,10 @@ if (!fs.existsSync(tripsFile)) {
   fs.writeFileSync(tripsFile, JSON.stringify([], null, 2));
 }
 
+if (!fs.existsSync(budgetsFile)) {
+  fs.writeFileSync(budgetsFile, JSON.stringify([], null, 2));
+}
+
 // Home route
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
