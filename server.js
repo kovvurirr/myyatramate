@@ -418,6 +418,94 @@ app.get("/admin/trips", (req, res) => {
   }
 });
 
+// Admin budget estimates view
+app.get("/admin/budgets", (req, res) => {
+  try {
+    const budgets = JSON.parse(fs.readFileSync(budgetsFile, "utf8"));
+
+    let html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>MyYatraMate Budget Estimates</title>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            padding: 30px;
+            background: #f1f5f9;
+          }
+
+          h1 {
+            color: #071a33;
+          }
+
+          .budget {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 18px;
+            padding: 20px;
+            margin-bottom: 18px;
+          }
+
+          .meta {
+            color: #64748b;
+            margin-bottom: 12px;
+            line-height: 1.6;
+          }
+
+          pre {
+            white-space: pre-wrap;
+            line-height: 1.6;
+            background: #f8fafc;
+            padding: 16px;
+            border-radius: 12px;
+          }
+
+          a {
+            color: #0f4c81;
+            font-weight: bold;
+          }
+        </style>
+      </head>
+      <body>
+        <h1>MyYatraMate Budget Estimates</h1>
+        <p>
+          <a href="/admin/leads">View Early Access Leads</a> |
+          <a href="/admin/trips">View Trip Plans</a>
+        </p>
+    `;
+
+    if (budgets.length === 0) {
+      html += `<p>No budget estimates generated yet.</p>`;
+    }
+
+    budgets.reverse().forEach((budget, index) => {
+      html += `
+        <div class="budget">
+          <h2>${index + 1}. ${budget.destination}</h2>
+          <div class="meta">
+            Travellers: ${budget.travellers} |
+            Nights: ${budget.nights} |
+            Total: ₹${Math.round(budget.grandTotal).toLocaleString("en-IN")} |
+            Per Person: ₹${Math.round(budget.perPerson).toLocaleString("en-IN")} |
+            Date: ${new Date(budget.createdAt).toLocaleString()}
+          </div>
+          <pre>${budget.budgetSummary}</pre>
+        </div>
+      `;
+    });
+
+    html += `
+      </body>
+      </html>
+    `;
+
+    res.send(html);
+  } catch (error) {
+    res.status(500).send("Unable to load budget estimates.");
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`MyYatraMate server running on port ${PORT}`);
 });
