@@ -1,7 +1,7 @@
 {
   "name": "myyatramate",
-  "version": "2.0.0",
-  "description": "MyYatraMate - AI Travel Swiss Knife Web App with MySQL backend",
+  "version": "3.0.0",
+  "description": "MyYatraMate - AI Travel Swiss Knife Web App with MySQL backend and admin login",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
@@ -12,12 +12,14 @@
     "yatramate",
     "webapp",
     "express",
-    "mysql"
+    "mysql",
+    "admin-login"
   ],
   "author": "MyYatraMate",
   "license": "ISC",
   "dependencies": {
     "express": "^4.18.3",
-    "mysql2": "^3.11.5"
+    "mysql2": "^3.11.5",
+    "express-session": "^1.18.1"
   }
 }
