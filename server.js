@@ -1,12 +1,15 @@
 const express = require("express");
 const path = require("path");
 const mysql = require("mysql2/promise");
+const session = require("express-session");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Admin PIN from Hostinger Environment Variables
-const ADMIN_PIN = process.env.ADMIN_PIN || "1234";
+// Admin credentials from Hostinger Environment Variables
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME || "admin";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
+const SESSION_SECRET = process.env.SESSION_SECRET || "myyatramate-change-this-secret";
 
 // MySQL credentials from Hostinger Environment Variables
 const DB_HOST = process.env.DB_HOST || "localhost";
@@ -16,6 +19,18 @@ const DB_NAME = process.env.DB_NAME || "";
 
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true }));
+
+app.use(session({
+  secret: SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    sameSite: "lax",
+    maxAge: 1000 * 60 * 60 * 8
+  }
+}));
+
 app.use(express.static(path.join(__dirname, "public")));
 
 let pool;
@@ -107,11 +122,18 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
-function adminAllowed(req) {
-  return req.query.pin === ADMIN_PIN;
+function isAdminLoggedIn(req) {
+  return req.session && req.session.isAdmin === true;
 }
 
-function adminShell(title, body) {
+function requireAdmin(req, res, next) {
+  if (!isAdminLoggedIn(req)) {
+    return res.redirect("/admin-login");
+  }
+  next();
+}
+
+function pageShell(title, body) {
   return `
     <!DOCTYPE html>
     <html>
@@ -119,18 +141,72 @@ function adminShell(title, body) {
       <title>${escapeHtml(title)}</title>
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <style>
+        * { box-sizing: border-box; }
         body { font-family: Arial, sans-serif; margin: 0; padding: 30px; background: #f1f5f9; color: #0f172a; }
         h1 { color: #071a33; margin-top: 0; }
         a { color: #0f4c81; font-weight: bold; }
         .nav { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; }
-        .nav a { background: white; border: 1px solid #e2e8f0; padding: 10px 14px; border-radius: 999px; text-decoration: none; }
+        .nav a, .nav form button {
+          background: white;
+          border: 1px solid #e2e8f0;
+          padding: 10px 14px;
+          border-radius: 999px;
+          text-decoration: none;
+          color: #0f4c81;
+          font-weight: bold;
+          cursor: pointer;
+          font-size: 16px;
+        }
         .card { background: white; border: 1px solid #e2e8f0; border-radius: 18px; padding: 20px; margin-bottom: 18px; }
         .meta { color: #64748b; margin-bottom: 12px; line-height: 1.6; }
         table { width: 100%; border-collapse: collapse; background: white; border-radius: 14px; overflow: hidden; }
         th, td { padding: 12px; border: 1px solid #e2e8f0; text-align: left; vertical-align: top; }
         th { background: #071a33; color: white; }
         pre { white-space: pre-wrap; line-height: 1.6; background: #f8fafc; padding: 16px; border-radius: 12px; overflow-x: auto; }
-        .warning { background: #fff7ed; border: 1px solid #fed7aa; padding: 16px; border-radius: 14px; color: #9a3412; margin-bottom: 18px; }
+        .login-wrap {
+          min-height: calc(100vh - 60px);
+          display: grid;
+          place-items: center;
+        }
+        .login-card {
+          width: min(440px, 100%);
+          background: white;
+          border: 1px solid #e2e8f0;
+          border-radius: 24px;
+          padding: 30px;
+          box-shadow: 0 18px 50px rgba(15, 23, 42, 0.12);
+        }
+        .login-card h1 { margin-bottom: 8px; }
+        .login-card p { color: #64748b; line-height: 1.6; }
+        .form-group { display: grid; gap: 8px; margin-bottom: 14px; }
+        label { font-weight: 700; color: #334155; }
+        input {
+          width: 100%;
+          padding: 14px 15px;
+          border: 1px solid #e2e8f0;
+          border-radius: 14px;
+          font-size: 15px;
+        }
+        .primary-btn {
+          width: 100%;
+          border: none;
+          border-radius: 999px;
+          padding: 14px 20px;
+          background: #f97316;
+          color: white;
+          font-weight: 800;
+          font-size: 16px;
+          cursor: pointer;
+          margin-top: 8px;
+        }
+        .error {
+          background: #fee2e2;
+          color: #991b1b;
+          border: 1px solid #fecaca;
+          padding: 12px;
+          border-radius: 12px;
+          margin-bottom: 14px;
+        }
         @media(max-width: 700px) { body { padding: 16px; } table { font-size: 13px; } }
       </style>
     </head>
@@ -139,15 +215,20 @@ function adminShell(title, body) {
   `;
 }
 
-function adminAuthPage() {
-  return adminShell("MyYatraMate Admin", `
-    <h1>MyYatraMate Admin</h1>
-    <div class="warning">
-      Enter admin PIN in the URL to view data.<br><br>
-      Example: <strong>/admin?pin=1234</strong>
+function adminNav() {
+  return `
+    <div class="nav">
+      <a href="/admin">Admin Home</a>
+      <a href="/admin/leads">Early Access Leads</a>
+      <a href="/admin/trips">Trip Plans</a>
+      <a href="/admin/budgets">Budget Estimates</a>
+      <a href="/admin/expenses">Expenses</a>
+      <a href="/health">Health Check</a>
+      <form method="POST" action="/admin-logout" style="margin:0;">
+        <button type="submit">Logout</button>
+      </form>
     </div>
-    <p>This is temporary protection for the MVP. Later we will add proper admin login.</p>
-  `);
+  `;
 }
 
 // Public routes
@@ -172,6 +253,52 @@ app.get("/health", async (req, res) => {
       message: error.message
     });
   }
+});
+
+// Admin login routes
+app.get("/admin-login", (req, res) => {
+  if (isAdminLoggedIn(req)) {
+    return res.redirect("/admin");
+  }
+
+  const error = req.query.error ? `<div class="error">Invalid username or password.</div>` : "";
+
+  res.send(pageShell("MyYatraMate Admin Login", `
+    <div class="login-wrap">
+      <form class="login-card" method="POST" action="/admin-login">
+        <h1>MyYatraMate Admin</h1>
+        <p>Login to view leads, trips, budget estimates and expenses.</p>
+        ${error}
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" name="username" placeholder="Admin username" required />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" name="password" placeholder="Admin password" required />
+        </div>
+        <button class="primary-btn" type="submit">Login</button>
+      </form>
+    </div>
+  `));
+});
+
+app.post("/admin-login", (req, res) => {
+  const { username, password } = req.body;
+
+  if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+    req.session.isAdmin = true;
+    req.session.adminUsername = username;
+    return res.redirect("/admin");
+  }
+
+  return res.redirect("/admin-login?error=1");
+});
+
+app.post("/admin-logout", (req, res) => {
+  req.session.destroy(() => {
+    res.redirect("/admin-login");
+  });
 });
 
 // API: Early Access
@@ -370,32 +497,22 @@ app.post("/api/expense", async (req, res) => {
   }
 });
 
-// Admin pages
-app.get("/admin", (req, res) => {
-  if (!adminAllowed(req)) return res.send(adminAuthPage());
-
-  const pin = encodeURIComponent(req.query.pin);
+// Protected admin pages
+app.get("/admin", requireAdmin, (req, res) => {
   const body = `
     <h1>MyYatraMate Admin Dashboard</h1>
-    <div class="nav">
-      <a href="/admin/leads?pin=${pin}">Early Access Leads</a>
-      <a href="/admin/trips?pin=${pin}">Trip Plans</a>
-      <a href="/admin/budgets?pin=${pin}">Budget Estimates</a>
-      <a href="/admin/expenses?pin=${pin}">Expenses</a>
-      <a href="/health">Health Check</a>
-    </div>
+    ${adminNav()}
     <div class="card">
       <h2>Admin Status</h2>
-      <p>The MVP admin pages are working with MySQL database.</p>
-      <p><strong>Next upgrade:</strong> proper username/password login and user accounts.</p>
+      <p>The MVP admin pages are working with MySQL database and session-based login.</p>
+      <p><strong>Logged in as:</strong> ${escapeHtml(req.session.adminUsername || "admin")}</p>
+      <p><strong>Next upgrade:</strong> user accounts and real AI integration.</p>
     </div>
   `;
-  res.send(adminShell("MyYatraMate Admin", body));
+  res.send(pageShell("MyYatraMate Admin", body));
 });
 
-app.get("/admin/leads", async (req, res) => {
-  if (!adminAllowed(req)) return res.send(adminAuthPage());
-  const pin = encodeURIComponent(req.query.pin);
+app.get("/admin/leads", requireAdmin, async (req, res) => {
   const [leads] = await pool.query(`SELECT * FROM early_access_leads ORDER BY id DESC`);
 
   const rows = leads.length
@@ -404,21 +521,14 @@ app.get("/admin/leads", async (req, res) => {
     `).join("")
     : `<tr><td colspan="6">No early access leads yet.</td></tr>`;
 
-  res.send(adminShell("MyYatraMate Leads", `
+  res.send(pageShell("MyYatraMate Leads", `
     <h1>MyYatraMate Early Access Leads</h1>
-    <div class="nav">
-      <a href="/admin?pin=${pin}">Admin Home</a>
-      <a href="/admin/trips?pin=${pin}">Trip Plans</a>
-      <a href="/admin/budgets?pin=${pin}">Budgets</a>
-      <a href="/admin/expenses?pin=${pin}">Expenses</a>
-    </div>
+    ${adminNav()}
     <table><thead><tr><th>S.No</th><th>Name</th><th>Email</th><th>Phone</th><th>Traveller Type</th><th>Date</th></tr></thead><tbody>${rows}</tbody></table>
   `));
 });
 
-app.get("/admin/trips", async (req, res) => {
-  if (!adminAllowed(req)) return res.send(adminAuthPage());
-  const pin = encodeURIComponent(req.query.pin);
+app.get("/admin/trips", requireAdmin, async (req, res) => {
   const [trips] = await pool.query(`SELECT * FROM trip_plans ORDER BY id DESC`);
 
   const cards = trips.length
@@ -438,21 +548,14 @@ app.get("/admin/trips", async (req, res) => {
     `).join("")
     : `<p>No trip plans generated yet.</p>`;
 
-  res.send(adminShell("MyYatraMate Trip Plans", `
+  res.send(pageShell("MyYatraMate Trip Plans", `
     <h1>MyYatraMate Generated Trip Plans</h1>
-    <div class="nav">
-      <a href="/admin?pin=${pin}">Admin Home</a>
-      <a href="/admin/leads?pin=${pin}">Leads</a>
-      <a href="/admin/budgets?pin=${pin}">Budgets</a>
-      <a href="/admin/expenses?pin=${pin}">Expenses</a>
-    </div>
+    ${adminNav()}
     ${cards}
   `));
 });
 
-app.get("/admin/budgets", async (req, res) => {
-  if (!adminAllowed(req)) return res.send(adminAuthPage());
-  const pin = encodeURIComponent(req.query.pin);
+app.get("/admin/budgets", requireAdmin, async (req, res) => {
   const [budgets] = await pool.query(`SELECT * FROM budgets ORDER BY id DESC`);
 
   const cards = budgets.length
@@ -471,21 +574,14 @@ app.get("/admin/budgets", async (req, res) => {
     `).join("")
     : `<p>No budget estimates generated yet.</p>`;
 
-  res.send(adminShell("MyYatraMate Budget Estimates", `
+  res.send(pageShell("MyYatraMate Budget Estimates", `
     <h1>MyYatraMate Budget Estimates</h1>
-    <div class="nav">
-      <a href="/admin?pin=${pin}">Admin Home</a>
-      <a href="/admin/leads?pin=${pin}">Leads</a>
-      <a href="/admin/trips?pin=${pin}">Trips</a>
-      <a href="/admin/expenses?pin=${pin}">Expenses</a>
-    </div>
+    ${adminNav()}
     ${cards}
   `));
 });
 
-app.get("/admin/expenses", async (req, res) => {
-  if (!adminAllowed(req)) return res.send(adminAuthPage());
-  const pin = encodeURIComponent(req.query.pin);
+app.get("/admin/expenses", requireAdmin, async (req, res) => {
   const [expenses] = await pool.query(`SELECT * FROM expenses ORDER BY id DESC`);
 
   const rows = expenses.length
@@ -502,14 +598,9 @@ app.get("/admin/expenses", async (req, res) => {
     `).join("")
     : `<tr><td colspan="7">No expenses added yet.</td></tr>`;
 
-  res.send(adminShell("MyYatraMate Expenses", `
+  res.send(pageShell("MyYatraMate Expenses", `
     <h1>MyYatraMate Expenses</h1>
-    <div class="nav">
-      <a href="/admin?pin=${pin}">Admin Home</a>
-      <a href="/admin/leads?pin=${pin}">Leads</a>
-      <a href="/admin/trips?pin=${pin}">Trips</a>
-      <a href="/admin/budgets?pin=${pin}">Budgets</a>
-    </div>
+    ${adminNav()}
     <table><thead><tr><th>S.No</th><th>Trip</th><th>Category</th><th>Currency</th><th>Amount</th><th>Note</th><th>Date</th></tr></thead><tbody>${rows}</tbody></table>
   `));
 });
