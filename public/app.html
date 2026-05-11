@@ -990,32 +990,57 @@
       "Something went wrong while generating the trip plan.";
   }
 }
-    function calculateBudget() {
-      const hotelCost = Number(document.getElementById("hotelCost").value || 0);
-      const nights = Number(document.getElementById("nights").value || 0);
-      const foodCost = Number(document.getElementById("foodCost").value || 0);
-      const transportCost = Number(document.getElementById("transportCost").value || 0);
-      const ticketCost = Number(document.getElementById("ticketCost").value || 0);
-      const shoppingCost = Number(document.getElementById("shoppingCost").value || 0);
+    async function calculateBudget() {
+  const destination = document.getElementById("budgetDestination").value;
+  const travellers = document.getElementById("travellers").value || 1;
+  const hotelCost = document.getElementById("hotelCost").value || 0;
+  const nights = document.getElementById("nights").value || 0;
+  const foodCost = document.getElementById("foodCost").value || 0;
+  const transportCost = document.getElementById("transportCost").value || 0;
+  const ticketCost = document.getElementById("ticketCost").value || 0;
+  const shoppingCost = document.getElementById("shoppingCost").value || 0;
 
-      const hotelTotal = hotelCost * nights;
-      const foodTotal = foodCost * (nights + 1);
-      const subtotal = hotelTotal + foodTotal + transportCost + ticketCost + shoppingCost;
-      const buffer = subtotal * 0.12;
-      const total = subtotal + buffer;
+  if (!destination) {
+    alert("Please enter destination.");
+    return;
+  }
 
+  document.getElementById("budgetResult").innerText =
+    "Calculating budget estimate...";
+
+  try {
+    const response = await fetch("/api/budget", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        destination,
+        travellers,
+        hotelCost,
+        nights,
+        foodCost,
+        transportCost,
+        ticketCost,
+        shoppingCost
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
       document.getElementById("budgetResult").innerText =
-`Budget Estimate
-
-Hotel: ₹${hotelTotal.toLocaleString("en-IN")}
-Food: ₹${foodTotal.toLocaleString("en-IN")}
-Transport: ₹${transportCost.toLocaleString("en-IN")}
-Sightseeing/Tickets: ₹${ticketCost.toLocaleString("en-IN")}
-Shopping Buffer: ₹${shoppingCost.toLocaleString("en-IN")}
-Emergency Buffer 12%: ₹${Math.round(buffer).toLocaleString("en-IN")}
-
-Estimated Total: ₹${Math.round(total).toLocaleString("en-IN")}`;
+        data.budget.budgetSummary;
+    } else {
+      document.getElementById("budgetResult").innerText =
+        data.message || "Unable to calculate budget.";
     }
+  } catch (error) {
+    console.error(error);
+    document.getElementById("budgetResult").innerText =
+      "Something went wrong while calculating budget.";
+  }
+}
 
     function translatePhrase() {
       const phrase = document.getElementById("phraseSelect").value;
