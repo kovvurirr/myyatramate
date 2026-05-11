@@ -714,31 +714,45 @@
   </footer>
 
   <script>
-    function handleEarlyAccess(event) {
-      event.preventDefault();
+    async function handleEarlyAccess(event) {
+  event.preventDefault();
 
-      const name = document.getElementById("name").value;
-      const email = document.getElementById("email").value;
-      const phone = document.getElementById("phone").value;
-      const travellerType = document.getElementById("travellerType").value;
+  const name = document.getElementById("name").value;
+  const email = document.getElementById("email").value;
+  const phone = document.getElementById("phone").value;
+  const travellerType = document.getElementById("travellerType").value;
 
-      const message =
-        "Early Access Request%0A%0A" +
-        "Name: " + encodeURIComponent(name) + "%0A" +
-        "Email: " + encodeURIComponent(email) + "%0A" +
-        "Phone: " + encodeURIComponent(phone) + "%0A" +
-        "Traveller Type: " + encodeURIComponent(travellerType);
-
-      alert("Thank you! Your early access interest is recorded. In the next version, we will connect this form to email/database.");
-
-      console.log({
+  try {
+    const response = await fetch("/api/early-access", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
         name,
         email,
         phone,
         travellerType
-      });
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      alert("Thank you! Your early access request has been saved.");
+
+      document.getElementById("name").value = "";
+      document.getElementById("email").value = "";
+      document.getElementById("phone").value = "";
+      document.getElementById("travellerType").value = "";
+    } else {
+      alert(data.message || "Unable to save request. Please try again.");
     }
-  </script>
+  } catch (error) {
+    console.error(error);
+    alert("Something went wrong. Please try again.");
+  }
+}  </script>
 </body>
 </html>
 </body>
