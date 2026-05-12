@@ -88,6 +88,27 @@ async function ensureTripDateColumns() {
 }
 
 
+
+async function ensureVisaChecklistTables() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS visa_checklists (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT NULL,
+      guest_id VARCHAR(100) NULL,
+      destination VARCHAR(120) NOT NULL,
+      travel_purpose VARCHAR(80) NULL,
+      departure_date VARCHAR(40) NULL,
+      return_date VARCHAR(40) NULL,
+      checklist_json LONGTEXT NULL,
+      passport_expiry VARCHAR(40) NULL,
+      visa_expiry VARCHAR(40) NULL,
+      uploaded_docs LONGTEXT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+}
+
+
 async function initDatabase() {
   if (!DB_USER || !DB_NAME) {
     throw new Error("DB_USER and DB_NAME environment variables are required.");
@@ -184,6 +205,7 @@ async function initDatabase() {
   await ensureProfileAndTripColumns();
   await ensureAIBudgetColumns();
   await ensureTripDateColumns();
+  await ensureVisaChecklistTables();
 
   console.log("MySQL database initialized successfully.");
 }
@@ -1204,6 +1226,101 @@ app.delete("/api/trip/:id", requireUserOrGuest, async (req, res) => {
   }
 });
 
+
+
+function getVisaChecklistTemplate(destination, travelPurpose) {
+  const d = String(destination || "").toLowerCase();
+  const purpose = String(travelPurpose || "").toLowerCase();
+
+  let region = "General International Travel";
+  let visaStatusNote = "Visa and entry rules change frequently. Verify with the official embassy/consulate or a reliable visa partner before booking.";
+  let documents = [
+    "Valid passport with sufficient validity",
+    "Confirmed return/onward ticket",
+    "Hotel booking or stay address",
+    "Travel insurance",
+    "Proof of funds",
+    "Day-wise itinerary",
+    "Passport-size photographs as per destination rules"
+  ];
+  let travelForms = ["Check whether arrival card, health declaration, customs declaration or e-visa registration is required."];
+  let reminders = [
+    "Passport should usually have at least 6 months validity from travel date.",
+    "Keep printed and digital copies of all documents.",
+    "Verify latest requirements from official sources before travel."
+  ];
+
+  if (d.includes("thailand")) {
+    region = "Thailand";
+    visaStatusNote = "For Indian travellers, Thailand entry/visa rules may change. Check official Thai immigration/embassy guidance before travel.";
+    documents = ["Passport", "Thailand Digital Arrival Card if required", "Hotel booking / stay address", "Return or onward ticket", "Travel insurance recommended", "Proof of funds if requested", "Day-wise itinerary"];
+    travelForms = ["Thailand Digital Arrival Card / arrival form if applicable."];
+  } else if (d.includes("dubai") || d.includes("uae") || d.includes("united arab emirates")) {
+    region = "Dubai / UAE";
+    visaStatusNote = "Indian travellers generally need a UAE visa unless eligible under a specific exemption. Verify latest UAE visa rules before travel.";
+    documents = ["Passport", "UAE / Dubai visa", "Travel insurance", "Hotel booking / stay address", "Return ticket", "Passport-size photograph", "Proof of funds if requested"];
+    travelForms = ["Check airline/UAE entry requirements before departure."];
+  } else if (d.includes("schengen") || d.includes("france") || d.includes("germany") || d.includes("italy") || d.includes("spain") || d.includes("netherlands") || d.includes("switzerland") || d.includes("austria")) {
+    region = "Schengen";
+    visaStatusNote = "Indian travellers generally need a Schengen visa. Requirements vary by embassy/VFS and country of main stay.";
+    documents = ["Schengen visa application form", "Cover letter", "Day-wise itinerary", "Bank statement", "Income tax returns / financial proof", "Travel insurance meeting Schengen requirements", "Hotel bookings", "Flight reservation / confirmed tickets as applicable", "Employment letter / leave letter", "Passport-size photographs", "Passport"];
+    travelForms = ["Check country-specific form, VFS/embassy appointment and biometrics requirements."];
+  } else if (d.includes("japan")) {
+    region = "Japan";
+    visaStatusNote = "Indian travellers generally need a Japan visa. Business travellers may need invitation/supporting documents.";
+    documents = ["Japan visa application form", "Passport", "Photograph as per Japan visa specification", "Day-wise itinerary", "Hotel booking", "Flight itinerary", "Employment letter / leave approval", "Bank statement", "Invitation letter if business", "Company covering letter if business"];
+    travelForms = ["Check latest Japan embassy/VFS process and appointment requirements."];
+  } else if (d.includes("china")) {
+    region = "China";
+    visaStatusNote = "Indian travellers generally need a China visa. Business travel usually requires invitation and company details.";
+    documents = ["Passport", "China visa application form", "Invitation letter", "Business details / company covering letter", "Applicant employment details", "Hotel booking / stay details", "Flight itinerary", "Photograph as per China visa specification", "Previous China visa details if applicable"];
+    travelForms = ["Check latest China visa centre process and appointment requirements."];
+  }
+
+  if (purpose.includes("business")) {
+    documents.push("Business meeting invitation / expo registration if applicable");
+    documents.push("Company covering letter");
+    documents.push("Company profile / business card if required");
+  }
+
+  return {
+    destination: region,
+    visaStatusNote,
+    documents: Array.from(new Set(documents)),
+    travelForms,
+    reminders,
+    expiryAlerts: ["Passport expiry reminder", "Visa expiry reminder", "Travel insurance validity reminder"],
+    officialSourceReminder: "Always verify with official embassy/consulate/immigration sources or a reliable visa partner because visa rules change."
+  };
+}
+
+app.post("/api/visa-checklist", requireUserOrGuest, async (req, res) => {
+  try {
+    const { destination, travelPurpose, departureDate, returnDate, passportExpiry, visaExpiry, uploadedDocs } = req.body;
+    if (!destination) return res.status(400).json({ success: false, message: "Destination is required." });
+
+    const owner = getSessionOwner(req);
+    const checklist = getVisaChecklistTemplate(destination, travelPurpose);
+    checklist.travelPurpose = travelPurpose || "";
+    checklist.departureDate = departureDate || "";
+    checklist.returnDate = returnDate || "";
+    checklist.passportExpiry = passportExpiry || "";
+    checklist.visaExpiry = visaExpiry || "";
+    checklist.uploadedDocs = Array.isArray(uploadedDocs) ? uploadedDocs : [];
+
+    const [result] = await pool.query(
+      `INSERT INTO visa_checklists
+       (user_id, guest_id, destination, travel_purpose, departure_date, return_date, checklist_json, passport_expiry, visa_expiry, uploaded_docs)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [owner.userId, owner.guestId, destination, travelPurpose || "", departureDate || "", returnDate || "", JSON.stringify(checklist), passportExpiry || "", visaExpiry || "", JSON.stringify(checklist.uploadedDocs)]
+    );
+
+    res.json({ success: true, checklistId: result.insertId, checklist });
+  } catch (error) {
+    console.error("Visa checklist error:", error);
+    res.status(500).json({ success: false, message: "Unable to generate visa checklist: " + error.message });
+  }
+});
 
 // Protected admin pages
 app.get("/admin", requireAdmin, (req, res) => {
