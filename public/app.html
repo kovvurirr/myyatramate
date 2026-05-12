@@ -865,6 +865,16 @@
             </div>
 
             <div class="form-group">
+              <label>Departure Date</label>
+              <input type="date" id="departureDate" />
+            </div>
+
+            <div class="form-group">
+              <label>Return Date</label>
+              <input type="date" id="returnDate" />
+            </div>
+
+            <div class="form-group">
               <label>Travel Type</label>
               <select id="travelType">
                 <option>Family Trip</option>
@@ -916,7 +926,7 @@
         <div class="card" id="budget">
           <h2>AI Smart Budget Engine</h2>
           <p class="card-desc">
-            First generate a trip plan. Then this module uses the itinerary and AI to estimate travel fare, hotel, food, airport transfers,
+            First generate a trip plan. Then this module uses the itinerary and AI to estimate practical route-wise travel fare, hotel, food, airport transfers,
             local transport, sightseeing tickets, SIM/roaming, shopping, miscellaneous and emergency buffer.
           </p>
 
@@ -944,6 +954,11 @@
                 <option>Own Vehicle</option>
                 <option>Not Applicable</option>
               </select>
+            </div>
+
+            <div class="form-group">
+              <label>Known fare per traveller (optional)</label>
+              <input type="number" id="knownFarePerTraveller" placeholder="Leave blank for AI estimate" />
             </div>
 
             <div class="form-group">
@@ -2026,6 +2041,12 @@
       const travellers = document.getElementById("tripTravellers")?.value || "";
       if (destination) document.getElementById("budgetDestination").value = destination;
       if (travellers) document.getElementById("travellers").value = travellers;
+      const dep = document.getElementById("departureDate")?.value || "";
+      const ret = document.getElementById("returnDate")?.value || "";
+      if (dep || ret) {
+        document.getElementById("budgetResult").innerHTML = `Trip details carried from planner. Dates: ${dep || "-"} to ${ret || "-"}. Select budget preferences and click Generate AI Smart Budget.`;
+        return;
+      }
       document.getElementById("budgetResult").innerHTML = currentTripPlanText
         ? "Trip details carried from planner. Select budget preferences and click Generate AI Smart Budget."
         : "Trip fields carried. For best result, generate a trip plan first.";
@@ -2083,6 +2104,8 @@
         fromCity: document.getElementById("fromCity")?.value || "",
         destination,
         days: document.getElementById("days")?.value || "",
+        departureDate: document.getElementById("departureDate")?.value || "",
+        returnDate: document.getElementById("returnDate")?.value || "",
         travellers,
         travelType: document.getElementById("travelType")?.value || "",
         budgetStyle: document.getElementById("budgetStyle")?.value || "",
@@ -2090,6 +2113,7 @@
         specialNeeds: document.getElementById("specialNeeds")?.value || "",
         tripPlanText: currentTripPlanText || document.getElementById("tripResult")?.innerText || "",
         travelMode: document.getElementById("budgetTravelMode").value,
+        knownFarePerTraveller: document.getElementById("knownFarePerTraveller")?.value || "",
         hotelCategory: document.getElementById("hotelCategory").value,
         localTransportMode: document.getElementById("localTransportMode").value,
         shoppingBudget: document.getElementById("shoppingBudget").value
