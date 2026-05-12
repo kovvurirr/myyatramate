@@ -630,6 +630,16 @@
     }
 
 
+
+    .visa-check-grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 18px; align-items: start; }
+    .doc-chip-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .doc-chip { background: #e0f2fe; color: var(--blue); border: 1px solid #bae6fd; border-radius: 999px; padding: 7px 12px; font-size: 13px; font-weight: 800; }
+    .checklist-table { width: 100%; border-collapse: collapse; margin-top: 16px; background: white; border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+    .checklist-table th, .checklist-table td { border: 1px solid var(--border); padding: 12px; text-align: left; vertical-align: top; }
+    .checklist-table th { background: var(--navy); color: white; }
+    .warning-note { background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; border-radius: 16px; padding: 14px; margin: 14px 0; line-height: 1.6; }
+    @media (max-width: 950px) { .visa-check-grid { grid-template-columns: 1fr; } }
+
     .ai-budget-table { width: 100%; border-collapse: collapse; margin: 18px 0; background: white; border-radius: 16px; overflow: hidden; border: 1px solid var(--border); }
     .ai-budget-table th, .ai-budget-table td { border: 1px solid var(--border); padding: 12px; text-align: left; vertical-align: top; }
     .ai-budget-table th { background: #071a33; color: white; }
@@ -2091,6 +2101,120 @@
         </div>
       `;
     }
+
+
+    let selectedVisaDocs = [];
+
+    function trackVisaDocs() {
+      const input = document.getElementById("visaDocUpload");
+      selectedVisaDocs = Array.from(input?.files || []).map((file) => ({ name: file.name, size: file.size, type: file.type || "file" }));
+      const target = document.getElementById("visaDocList");
+      if (!target) return;
+      target.innerHTML = selectedVisaDocs.length
+        ? selectedVisaDocs.map((doc) => `<span class="doc-chip">${escapeHTML(doc.name)}</span>`).join("")
+        : '<span class="doc-chip">No documents selected yet</span>';
+    }
+
+    function carryTripDetailsToVisa() {
+      const destination = document.getElementById("destination")?.value || "";
+      const travelType = document.getElementById("travelType")?.value || "";
+      const dep = document.getElementById("departureDate")?.value || "";
+      const ret = document.getElementById("returnDate")?.value || "";
+
+      if (destination) {
+        const visaDest = document.getElementById("visaDestination");
+        const d = destination.toLowerCase();
+        if (d.includes("dubai") || d.includes("uae")) visaDest.value = "Dubai / UAE";
+        else if (d.includes("thailand")) visaDest.value = "Thailand";
+        else if (d.includes("japan")) visaDest.value = "Japan";
+        else if (d.includes("china")) visaDest.value = "China";
+        else if (d.includes("germany") || d.includes("france") || d.includes("italy") || d.includes("schengen")) visaDest.value = "Schengen";
+        else visaDest.value = "Other";
+      }
+
+      if (travelType.toLowerCase().includes("business")) document.getElementById("visaTravelPurpose").value = "Business";
+      else if (travelType.toLowerCase().includes("pilgrimage")) document.getElementById("visaTravelPurpose").value = "Pilgrimage";
+      else document.getElementById("visaTravelPurpose").value = "Tourism";
+
+      if (dep) document.getElementById("visaDepartureDate").value = dep;
+      if (ret) document.getElementById("visaReturnDate").value = ret;
+      document.getElementById("visaResult").innerHTML = "Trip details carried. Click Generate Checklist.";
+    }
+
+    function daysUntil(dateValue) {
+      if (!dateValue) return null;
+      const today = new Date();
+      const date = new Date(dateValue + "T00:00:00");
+      return Math.ceil((date - today) / (1000 * 60 * 60 * 24));
+    }
+
+    function formatVisaChecklist(checklist) {
+      const passportDays = daysUntil(checklist.passportExpiry);
+      const visaDays = daysUntil(checklist.visaExpiry);
+      const expiryWarnings = [];
+      if (passportDays !== null) expiryWarnings.push(passportDays < 180 ? `Passport expiry alert: Around ${passportDays} days left. Many countries expect around 6 months validity.` : `Passport validity: Around ${passportDays} days remaining.`);
+      if (visaDays !== null) expiryWarnings.push(visaDays < 30 ? `Visa expiry alert: Around ${visaDays} days left. Recheck validity before travel.` : `Visa validity: Around ${visaDays} days remaining.`);
+
+      const docs = (checklist.documents || []).map((doc, index) => `
+        <tr><td>${index + 1}</td><td><strong>${escapeHTML(doc)}</strong></td><td><input type="checkbox" /> Prepared</td></tr>
+      `).join("");
+
+      const uploadedDocs = (checklist.uploadedDocs || []).length
+        ? checklist.uploadedDocs.map((doc) => `<li>${escapeHTML(doc.name || doc)}</li>`).join("")
+        : "<li>No documents selected in this session.</li>";
+
+      return `
+        <div class="formatted-output">
+          <h2>Visa & Document Checklist - ${escapeHTML(checklist.destination || "")}</h2>
+          <p><strong>Travel Purpose:</strong> ${escapeHTML(checklist.travelPurpose || "-")} | <strong>Dates:</strong> ${escapeHTML(checklist.departureDate || "-")} to ${escapeHTML(checklist.returnDate || "-")}</p>
+          <div class="warning-note">${escapeHTML(checklist.visaStatusNote || "")}<br><strong>${escapeHTML(checklist.officialSourceReminder || "")}</strong></div>
+          <h3>Document Checklist</h3>
+          <table class="checklist-table"><thead><tr><th>#</th><th>Document</th><th>Status</th></tr></thead><tbody>${docs}</tbody></table>
+          <h3>Travel Form Reminder</h3>
+          <ul>${(checklist.travelForms || []).map((item) => `<li>${escapeHTML(item)}</li>`).join("")}</ul>
+          <h3>Expiry Alerts</h3>
+          <ul>${expiryWarnings.length ? expiryWarnings.map((item) => `<li>${escapeHTML(item)}</li>`).join("") : "<li>Add passport/visa expiry dates to see reminders.</li>"}</ul>
+          <h3>Uploaded Document Tracker</h3>
+          <ul>${uploadedDocs}</ul>
+          <h3>General Reminders</h3>
+          <ul>${(checklist.reminders || []).map((item) => `<li>${escapeHTML(item)}</li>`).join("")}</ul>
+        </div>`;
+    }
+
+    async function generateVisaChecklist() {
+      hideExportActions("visaExportActions");
+      const payload = {
+        destination: document.getElementById("visaDestination").value,
+        travelPurpose: document.getElementById("visaTravelPurpose").value,
+        departureDate: document.getElementById("visaDepartureDate").value,
+        returnDate: document.getElementById("visaReturnDate").value,
+        passportExpiry: document.getElementById("passportExpiry").value,
+        visaExpiry: document.getElementById("visaExpiry").value,
+        uploadedDocs: selectedVisaDocs
+      };
+
+      document.getElementById("visaResult").innerHTML = "Preparing visa and document checklist...";
+
+      try {
+        const response = await fetch("/api/visa-checklist", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const data = await response.json();
+        if (data.success) {
+          document.getElementById("visaResult").innerHTML = formatVisaChecklist(data.checklist);
+          showExportActions("visaExportActions");
+        } else {
+          document.getElementById("visaResult").innerHTML = data.message || "Unable to generate checklist.";
+        }
+      } catch (error) {
+        console.error(error);
+        document.getElementById("visaResult").innerHTML = "Something went wrong while generating checklist.";
+      }
+    }
+
 
     async function generateAIBudget() {
       const destination = document.getElementById("budgetDestination").value || document.getElementById("destination")?.value;
