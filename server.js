@@ -95,6 +95,7 @@ async function ensureVisaChecklistTables() {
       id INT AUTO_INCREMENT PRIMARY KEY,
       user_id INT NULL,
       guest_id VARCHAR(100) NULL,
+      passport_country VARCHAR(120) NULL,
       destination VARCHAR(120) NOT NULL,
       travel_purpose VARCHAR(80) NULL,
       departure_date VARCHAR(40) NULL,
@@ -1228,12 +1229,14 @@ app.delete("/api/trip/:id", requireUserOrGuest, async (req, res) => {
 
 
 
-function getVisaChecklistTemplate(destination, travelPurpose) {
+function getVisaChecklistTemplate(passportCountry, destination, travelPurpose) {
+  const passport = String(passportCountry || "India").toLowerCase();
   const d = String(destination || "").toLowerCase();
   const purpose = String(travelPurpose || "").toLowerCase();
+  const isIndianPassport = passport.includes("india");
 
-  let region = "General International Travel";
-  let visaStatusNote = "Visa and entry rules change frequently. Verify with the official embassy/consulate or a reliable visa partner before booking.";
+  let region = destination || "General International Travel";
+  let visaStatusNote = `Visa and entry rules depend on passport country and destination. Passport country selected: ${passportCountry || "India"}. Verify with the official embassy/consulate or a reliable visa partner before booking.`;
   let documents = [
     "Valid passport with sufficient validity",
     "Confirmed return/onward ticket",
@@ -1252,27 +1255,27 @@ function getVisaChecklistTemplate(destination, travelPurpose) {
 
   if (d.includes("thailand")) {
     region = "Thailand";
-    visaStatusNote = "For Indian travellers, Thailand entry/visa rules may change. Check official Thai immigration/embassy guidance before travel.";
+    visaStatusNote = isIndianPassport ? "For Indian passport holders, Thailand entry/visa rules may change. Check official Thai immigration/embassy guidance before travel." : `For ${passportCountry || "your"} passport holders, Thailand visa/entry rules may differ. Verify through official Thai immigration/embassy sources.`;
     documents = ["Passport", "Thailand Digital Arrival Card if required", "Hotel booking / stay address", "Return or onward ticket", "Travel insurance recommended", "Proof of funds if requested", "Day-wise itinerary"];
     travelForms = ["Thailand Digital Arrival Card / arrival form if applicable."];
   } else if (d.includes("dubai") || d.includes("uae") || d.includes("united arab emirates")) {
     region = "Dubai / UAE";
-    visaStatusNote = "Indian travellers generally need a UAE visa unless eligible under a specific exemption. Verify latest UAE visa rules before travel.";
+    visaStatusNote = isIndianPassport ? "Indian passport holders generally need a UAE visa unless eligible under a specific exemption. Verify latest UAE visa rules before travel." : `For ${passportCountry || "your"} passport holders, UAE visa/entry rules may differ. Verify latest UAE visa rules before travel.`;
     documents = ["Passport", "UAE / Dubai visa", "Travel insurance", "Hotel booking / stay address", "Return ticket", "Passport-size photograph", "Proof of funds if requested"];
     travelForms = ["Check airline/UAE entry requirements before departure."];
   } else if (d.includes("schengen") || d.includes("france") || d.includes("germany") || d.includes("italy") || d.includes("spain") || d.includes("netherlands") || d.includes("switzerland") || d.includes("austria")) {
     region = "Schengen";
-    visaStatusNote = "Indian travellers generally need a Schengen visa. Requirements vary by embassy/VFS and country of main stay.";
+    visaStatusNote = isIndianPassport ? "Indian passport holders generally need a Schengen visa. Requirements vary by embassy/VFS and country of main stay." : `For ${passportCountry || "your"} passport holders, Schengen visa requirements may differ. Check the embassy/consulate of the main-stay country.`;
     documents = ["Schengen visa application form", "Cover letter", "Day-wise itinerary", "Bank statement", "Income tax returns / financial proof", "Travel insurance meeting Schengen requirements", "Hotel bookings", "Flight reservation / confirmed tickets as applicable", "Employment letter / leave letter", "Passport-size photographs", "Passport"];
     travelForms = ["Check country-specific form, VFS/embassy appointment and biometrics requirements."];
   } else if (d.includes("japan")) {
     region = "Japan";
-    visaStatusNote = "Indian travellers generally need a Japan visa. Business travellers may need invitation/supporting documents.";
+    visaStatusNote = isIndianPassport ? "Indian passport holders generally need a Japan visa. Business travellers may need invitation/supporting documents." : `For ${passportCountry || "your"} passport holders, Japan visa requirements may differ. Verify through official sources.`;
     documents = ["Japan visa application form", "Passport", "Photograph as per Japan visa specification", "Day-wise itinerary", "Hotel booking", "Flight itinerary", "Employment letter / leave approval", "Bank statement", "Invitation letter if business", "Company covering letter if business"];
     travelForms = ["Check latest Japan embassy/VFS process and appointment requirements."];
   } else if (d.includes("china")) {
     region = "China";
-    visaStatusNote = "Indian travellers generally need a China visa. Business travel usually requires invitation and company details.";
+    visaStatusNote = isIndianPassport ? "Indian passport holders generally need a China visa. Business travel usually requires invitation and company details." : `For ${passportCountry || "your"} passport holders, China visa requirements may differ. Business travel usually requires invitation and company details.`;
     documents = ["Passport", "China visa application form", "Invitation letter", "Business details / company covering letter", "Applicant employment details", "Hotel booking / stay details", "Flight itinerary", "Photograph as per China visa specification", "Previous China visa details if applicable"];
     travelForms = ["Check latest China visa centre process and appointment requirements."];
   }
@@ -1284,6 +1287,7 @@ function getVisaChecklistTemplate(destination, travelPurpose) {
   }
 
   return {
+    passportCountry: passportCountry || "India",
     destination: region,
     visaStatusNote,
     documents: Array.from(new Set(documents)),
@@ -1296,11 +1300,11 @@ function getVisaChecklistTemplate(destination, travelPurpose) {
 
 app.post("/api/visa-checklist", requireUserOrGuest, async (req, res) => {
   try {
-    const { destination, travelPurpose, departureDate, returnDate, passportExpiry, visaExpiry, uploadedDocs } = req.body;
+    const { passportCountry, destination, travelPurpose, departureDate, returnDate, passportExpiry, visaExpiry, uploadedDocs } = req.body;
     if (!destination) return res.status(400).json({ success: false, message: "Destination is required." });
 
     const owner = getSessionOwner(req);
-    const checklist = getVisaChecklistTemplate(destination, travelPurpose);
+    const checklist = getVisaChecklistTemplate(passportCountry || "India", destination, travelPurpose);
     checklist.travelPurpose = travelPurpose || "";
     checklist.departureDate = departureDate || "";
     checklist.returnDate = returnDate || "";
@@ -1310,9 +1314,9 @@ app.post("/api/visa-checklist", requireUserOrGuest, async (req, res) => {
 
     const [result] = await pool.query(
       `INSERT INTO visa_checklists
-       (user_id, guest_id, destination, travel_purpose, departure_date, return_date, checklist_json, passport_expiry, visa_expiry, uploaded_docs)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [owner.userId, owner.guestId, destination, travelPurpose || "", departureDate || "", returnDate || "", JSON.stringify(checklist), passportExpiry || "", visaExpiry || "", JSON.stringify(checklist.uploadedDocs)]
+       (user_id, guest_id, passport_country, destination, travel_purpose, departure_date, return_date, checklist_json, passport_expiry, visa_expiry, uploaded_docs)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [owner.userId, owner.guestId, passportCountry || "India", destination, travelPurpose || "", departureDate || "", returnDate || "", JSON.stringify(checklist), passportExpiry || "", visaExpiry || "", JSON.stringify(checklist.uploadedDocs)]
     );
 
     res.json({ success: true, checklistId: result.insertId, checklist });
