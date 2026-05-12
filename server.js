@@ -81,6 +81,13 @@ async function ensureAIBudgetColumns() {
 }
 
 
+
+async function ensureTripDateColumns() {
+  await addColumnIfMissing("trip_plans", "departure_date", "VARCHAR(40) NULL");
+  await addColumnIfMissing("trip_plans", "return_date", "VARCHAR(40) NULL");
+}
+
+
 async function initDatabase() {
   if (!DB_USER || !DB_NAME) {
     throw new Error("DB_USER and DB_NAME environment variables are required.");
@@ -176,6 +183,7 @@ async function initDatabase() {
 
   await ensureProfileAndTripColumns();
   await ensureAIBudgetColumns();
+  await ensureTripDateColumns();
 
   console.log("MySQL database initialized successfully.");
 }
@@ -331,7 +339,7 @@ Create a practical, safe, family-friendly travel itinerary using the details bel
 Trip Details:
 - From city: ${fromCity || "Not specified"}
 - Destination: ${destination}
-- Duration: ${tripDays} days
+- Duration: ${tripDays} days\n- Departure date: ${departureDate || "Not specified"}\n- Return date: ${returnDate || "Not specified"}
 - Travellers: ${numTravellers}
 - Travel type: ${travelType || "General Trip"}
 - Budget style: ${budgetStyle || "Comfort"}
@@ -575,7 +583,7 @@ app.post("/api/early-access", async (req, res) => {
 // API: Trip Planner
 app.post("/api/trip-plan", requireUserOrGuest, async (req, res) => {
   try {
-    const { fromCity, destination, days, travellers, travelType, budgetStyle, foodPref, specialNeeds } = req.body;
+    const { fromCity, destination, days, travellers, travelType, budgetStyle, foodPref, specialNeeds, departureDate, returnDate } = req.body;
 
     if (!destination || !days) return res.status(400).json({ success: false, message: "Destination and number of days are required." });
 
@@ -615,9 +623,9 @@ ${plan}`;
     }
 
     const [result] = await pool.query(
-      `INSERT INTO trip_plans (user_id, guest_id, from_city, destination, days, travellers, travel_type, budget_style, food_pref, special_needs, plan)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [owner.userId, owner.guestId, fromCity || "", destination, tripDays, numTravellers, travelType || "", budgetStyle || "", foodPref || "", specialNeeds || "", plan]
+      `INSERT INTO trip_plans (user_id, guest_id, from_city, destination, days, travellers, travel_type, budget_style, food_pref, special_needs, departure_date, return_date, plan)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [owner.userId, owner.guestId, fromCity || "", destination, tripDays, numTravellers, travelType || "", budgetStyle || "", foodPref || "", specialNeeds || "", departureDate || "", returnDate || "", plan]
     );
 
     res.json({
@@ -654,11 +662,40 @@ function buildFallbackAIBudget(input) {
   const domesticHints = ["india", "hyderabad", "tirupati", "goa", "delhi", "mumbai", "bangalore", "chennai", "kolkata", "kerala", "jaipur"];
   const isInternational = !domesticHints.some((p) => destination.toLowerCase().includes(p));
 
-  let farePerPerson = isInternational ? 28000 : 7000;
   const mode = String(input.travelMode || "").toLowerCase();
-  if (mode.includes("train")) farePerPerson = isInternational ? 0 : 2500;
-  if (mode.includes("bus")) farePerPerson = isInternational ? 0 : 1600;
-  if (mode.includes("own")) farePerPerson = 3500;
+  const fromCity = input.fromCity || "Origin";
+  const routeLabel = `${fromCity} to ${destination}`;
+
+  let fareItemName = "Travel fare";
+  let fareBasis = "Approximate travel fare";
+  let farePerPerson = isInternational ? 28000 : 7000;
+
+  if (mode.includes("flight")) {
+    fareItemName = "Round-trip flight fare";
+    fareBasis = `Approx economy return airfare for ${routeLabel}. This is an estimate, not a live airline quote.`;
+    farePerPerson = isInternational ? 28000 : 7000;
+  } else if (mode.includes("train")) {
+    fareItemName = "Train fare";
+    fareBasis = `Approx return train fare for ${routeLabel}.`;
+    farePerPerson = isInternational ? 0 : 2500;
+  } else if (mode.includes("bus")) {
+    fareItemName = "Bus fare";
+    fareBasis = `Approx return bus fare for ${routeLabel}.`;
+    farePerPerson = isInternational ? 0 : 1600;
+  } else if (mode.includes("own")) {
+    fareItemName = "Own vehicle fuel / tolls";
+    fareBasis = `Approx fuel, toll and parking estimate for ${routeLabel}.`;
+    farePerPerson = 3500;
+  } else {
+    fareItemName = "Travel fare";
+    fareBasis = `Approx travel fare for ${routeLabel}.`;
+  }
+
+  // If user knows actual fare, use it instead of estimation.
+  if (Number(input.knownFarePerTraveller) > 0) {
+    farePerPerson = Number(input.knownFarePerTraveller);
+    fareBasis = `User-entered fare per traveller for ${routeLabel}.`;
+  }
 
   const hotelCat = String(input.hotelCategory || "").toLowerCase();
   let hotelPerNight = isInternational ? 6500 : 3500;
@@ -696,7 +733,7 @@ function buildFallbackAIBudget(input) {
       "Airport transfers, local transport, tickets, SIM/roaming and emergency buffer are included."
     ],
     costItems: [
-      { item: "Flight / train / bus fare", basis: `${input.travelMode || "Travel"} estimate for ${numTravellers} traveller(s)`, amount: Math.round(fareTotal) },
+      { item: fareItemName, basis: `${fareBasis} Travellers: ${numTravellers}.`, amount: Math.round(fareTotal) },
       { item: "Hotel", basis: `${input.hotelCategory || "3 Star"} for ${Math.max(1, numDays - 1)} night(s)`, amount: Math.round(hotelTotal) },
       { item: "Food", basis: `${numTravellers} traveller(s) x ${numDays} day(s)`, amount: Math.round(foodTotal) },
       { item: "Airport / station transfers", basis: "Home to airport/station plus destination airport/station to hotel", amount: Math.round(airportTransfers) },
@@ -737,7 +774,7 @@ Use the trip plan and preferences to estimate the full budget.
 Trip details:
 From city: ${input.fromCity || "Not specified"}
 Destination: ${input.destination}
-Days: ${input.days}
+Days: ${input.days}\nDeparture date: ${input.departureDate || "Not specified"}\nReturn date: ${input.returnDate || "Not specified"}
 Travellers: ${input.travellers}
 Travel type: ${input.travelType || "General"}
 Budget style: ${input.budgetStyle || "Comfort"}
@@ -748,6 +785,7 @@ Budget preferences:
 Travel mode: ${input.travelMode || "Flight"}
 Hotel category: ${input.hotelCategory || "3 Star"}
 Local transport mode: ${input.localTransportMode || "Mixed"}
+Known fare per traveller if user entered: INR ${input.knownFarePerTraveller || 0}
 User shopping budget: INR ${input.shoppingBudget || 0}
 
 Trip itinerary:
@@ -759,7 +797,7 @@ Return ONLY valid JSON:
  "currency": "INR",
  "assumptions": ["string"],
  "costItems": [
-  {"item":"Flight / train / bus fare","basis":"string","amount":0},
+  {"item":"Round-trip flight fare / train fare / bus fare based on selected travel mode","basis":"string","amount":0},
   {"item":"Hotel","basis":"string","amount":0},
   {"item":"Food","basis":"string","amount":0},
   {"item":"Airport / station transfers","basis":"string","amount":0},
@@ -779,7 +817,7 @@ Return ONLY valid JSON:
  "disclaimer":"string"
 }
 
-Estimate approximate airfare/train/bus fare, home-to-airport/station transfer, destination arrival transfer, local sightseeing transport, entry tickets, food, hotel, SIM/roaming and emergency buffer. Amounts must be numeric INR values.`;
+Use practical labels based on selected travel mode. If travel mode is Flight, call it "Round-trip flight fare" and do not call it train/bus. If known fare is entered, use that value. Otherwise estimate approximate airfare/train/bus fare, home-to-airport/station transfer, destination arrival transfer, local sightseeing transport, entry tickets, food, hotel, SIM/roaming and emergency buffer. Amounts must be numeric INR values.`;
 
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(GEMINI_MODEL)}:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
   const response = await fetch(endpoint, {
@@ -1036,7 +1074,7 @@ app.get("/api/my-trips", requireUserOrGuest, async (req, res) => {
     const owner = getSessionOwner(req);
 
     const [trips] = await pool.query(
-      `SELECT id, from_city AS fromCity, destination, days, travellers, travel_type AS travelType,
+      `SELECT id, from_city AS fromCity, destination, days, travellers, departure_date AS departureDate, return_date AS returnDate, travel_type AS travelType,
               budget_style AS budgetStyle, food_pref AS foodPref, special_needs AS specialNeeds,
               plan, trip_status AS tripStatus, is_favourite AS isFavourite, created_at AS createdAt
        FROM trip_plans
