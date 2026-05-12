@@ -70,16 +70,6 @@ async function ensureProfileAndTripColumns() {
 
 
 
-async function ensureAdvancedTripPlannerColumns() {
-  await addColumnIfMissing("trip_plans", "travel_pace", "VARCHAR(50) NULL");
-  await addColumnIfMissing("trip_plans", "family_profile", "TEXT NULL");
-  await addColumnIfMissing("trip_plans", "travel_month", "VARCHAR(80) NULL");
-  await addColumnIfMissing("trip_plans", "weather_focus", "VARCHAR(120) NULL");
-  await addColumnIfMissing("trip_plans", "replan_reason", "VARCHAR(180) NULL");
-}
-
-
-
 async function ensureAIBudgetColumns() {
   await addColumnIfMissing("budgets", "trip_plan_text", "LONGTEXT NULL");
   await addColumnIfMissing("budgets", "travel_mode", "VARCHAR(80) NULL");
@@ -185,7 +175,6 @@ async function initDatabase() {
   await addColumnIfMissing("expenses", "guest_id", "VARCHAR(100) NULL");
 
   await ensureProfileAndTripColumns();
-  await ensureAdvancedTripPlannerColumns();
   await ensureAIBudgetColumns();
 
   console.log("MySQL database initialized successfully.");
@@ -284,7 +273,7 @@ function adminNav() {
 }
 
 
-function buildRuleBasedTripPlan({ fromCity, destination, tripDays, numTravellers, travelType, budgetStyle, foodPref, specialNeeds, travelPace, familyProfile, travelMonth, weatherFocus }) {
+function buildRuleBasedTripPlan({ fromCity, destination, tripDays, numTravellers, travelType, budgetStyle, foodPref, specialNeeds }) {
   let plan = `MyYatraMate Trip Plan\n\n`;
   plan += `From: ${fromCity || "Not specified"}\n`;
   plan += `Destination: ${destination}\n`;
@@ -329,7 +318,7 @@ function buildRuleBasedTripPlan({ fromCity, destination, tripDays, numTravellers
   return plan;
 }
 
-async function generateAITripPlan({ fromCity, destination, tripDays, numTravellers, travelType, budgetStyle, foodPref, specialNeeds, travelPace, familyProfile, travelMonth, weatherFocus }) {
+async function generateAITripPlan({ fromCity, destination, tripDays, numTravellers, travelType, budgetStyle, foodPref, specialNeeds }) {
   if (!GEMINI_API_KEY) {
     return null;
   }
@@ -347,10 +336,6 @@ Trip Details:
 - Travel type: ${travelType || "General Trip"}
 - Budget style: ${budgetStyle || "Comfort"}
 - Food preference: ${foodPref || "No Preference"}
-- Travel pace: ${travelPace || "Balanced"}
-- Family profile: ${familyProfile || "Not specified"}
-- Travel month / travel dates: ${travelMonth || "Not specified"}
-- Weather focus: ${weatherFocus || "General seasonal guidance"}
 - Special needs: ${specialNeeds || "None"}
 
 Output format:
@@ -590,7 +575,7 @@ app.post("/api/early-access", async (req, res) => {
 // API: Trip Planner
 app.post("/api/trip-plan", requireUserOrGuest, async (req, res) => {
   try {
-    const { fromCity, destination, days, travellers, travelType, budgetStyle, foodPref, specialNeeds, travelPace, familyProfile, travelMonth, weatherFocus } = req.body;
+    const { fromCity, destination, days, travellers, travelType, budgetStyle, foodPref, specialNeeds } = req.body;
 
     if (!destination || !days) return res.status(400).json({ success: false, message: "Destination and number of days are required." });
 
@@ -606,11 +591,7 @@ app.post("/api/trip-plan", requireUserOrGuest, async (req, res) => {
       travelType,
       budgetStyle,
       foodPref,
-      specialNeeds,
-      travelPace,
-      familyProfile,
-      travelMonth,
-      weatherFocus
+      specialNeeds
     };
 
     let planSource = "rule-based";
@@ -634,9 +615,9 @@ ${plan}`;
     }
 
     const [result] = await pool.query(
-      `INSERT INTO trip_plans (user_id, guest_id, from_city, destination, days, travellers, travel_type, budget_style, food_pref, special_needs, travel_pace, family_profile, travel_month, weather_focus, plan)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [owner.userId, owner.guestId, fromCity || "", destination, tripDays, numTravellers, travelType || "", budgetStyle || "", foodPref || "", specialNeeds || "", travelPace || "", familyProfile || "", travelMonth || "", weatherFocus || "", plan]
+      `INSERT INTO trip_plans (user_id, guest_id, from_city, destination, days, travellers, travel_type, budget_style, food_pref, special_needs, plan)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [owner.userId, owner.guestId, fromCity || "", destination, tripDays, numTravellers, travelType || "", budgetStyle || "", foodPref || "", specialNeeds || "", plan]
     );
 
     res.json({
@@ -669,7 +650,9 @@ function buildFallbackAIBudget(input) {
   const numDays = Math.max(1, Number(input.days) || 3);
   const numTravellers = Math.max(1, Number(input.travellers) || 1);
   const shopping = Number(input.shoppingBudget) || 0;
-  const isInternational = !["india","hyderabad","tirupati","goa","delhi","mumbai","bangalore","chennai","kolkata","kerala","jaipur"].some((p) => destination.toLowerCase().includes(p));
+
+  const domesticHints = ["india", "hyderabad", "tirupati", "goa", "delhi", "mumbai", "bangalore", "chennai", "kolkata", "kerala", "jaipur"];
+  const isInternational = !domesticHints.some((p) => destination.toLowerCase().includes(p));
 
   let farePerPerson = isInternational ? 28000 : 7000;
   const mode = String(input.travelMode || "").toLowerCase();
@@ -684,7 +667,8 @@ function buildFallbackAIBudget(input) {
   if (hotelCat.includes("5")) hotelPerNight = isInternational ? 18000 : 12000;
   if (hotelCat.includes("apartment")) hotelPerNight = isInternational ? 7500 : 4500;
 
-  let foodPerPersonPerDay = isInternational ? 2200 : 900;
+  const foodPerPersonPerDay = isInternational ? 2200 : 900;
+
   let localTransportPerDay = isInternational ? 4500 : 2200;
   const localMode = String(input.localTransportMode || "").toLowerCase();
   if (localMode.includes("metro") || localMode.includes("bus")) localTransportPerDay = isInternational ? 1600 : 800;
@@ -707,8 +691,8 @@ function buildFallbackAIBudget(input) {
     destination,
     currency: "INR",
     assumptions: [
-      "Fallback estimate used because AI estimate was unavailable.",
-      "Actual prices depend on travel dates, hotel availability and booking time.",
+      "Fallback estimate used when AI budget is unavailable.",
+      "Actual fares and hotel prices depend on travel dates, availability and booking time.",
       "Airport transfers, local transport, tickets, SIM/roaming and emergency buffer are included."
     ],
     costItems: [
@@ -720,21 +704,31 @@ function buildFallbackAIBudget(input) {
       { item: "Sightseeing / entry tickets", basis: "Approximate attraction entry costs based on trip length", amount: Math.round(sightseeingTickets) },
       { item: "SIM card / roaming", basis: isInternational ? "International SIM/roaming pack" : "Connectivity allowance", amount: Math.round(simRoaming) },
       { item: "Travel insurance / documents", basis: isInternational ? "Basic travel insurance estimate" : "Usually not required for domestic trip", amount: Math.round(insurance) },
-      { item: "Shopping buffer", basis: "User entered shopping budget", amount: Math.round(shopping) },
+      { item: "Shopping buffer", basis: "User-entered shopping budget", amount: Math.round(shopping) },
       { item: "Miscellaneous", basis: "Water, tips, lockers, baggage, convenience fees", amount: Math.round(misc) },
       { item: "Emergency buffer", basis: "12% contingency", amount: Math.round(emergency) }
     ],
-    planComparison: { economy: Math.round(total * 0.78), comfort: Math.round(total), premium: Math.round(total * 1.55) },
+    planComparison: {
+      economy: Math.round(total * 0.78),
+      comfort: Math.round(total),
+      premium: Math.round(total * 1.55)
+    },
     totalBudget: Math.round(total),
     perPerson: Math.round(total / numTravellers),
-    recommendation: "Use the Comfort estimate as the working budget and keep emergency buffer untouched.",
-    savingsTips: ["Book flights and hotels early.", "Use metro/bus where safe.", "Use private taxi for airport transfers, late nights or senior comfort.", "Pre-check ticket prices for major attractions."],
+    recommendation: "Use the Comfort estimate as your working budget and keep the emergency buffer untouched.",
+    savingsTips: [
+      "Book flights and hotels early.",
+      "Use metro/bus where safe and practical.",
+      "Use private taxi for airport transfers, late nights or senior comfort.",
+      "Pre-check ticket prices for major attractions."
+    ],
     disclaimer: "This is an approximate planning estimate, not a live booking quote."
   };
 }
 
 async function generateAIBudgetEstimate(input) {
   if (!GEMINI_API_KEY) return null;
+
   const prompt = `
 You are MyYatraMate's intelligent travel budget engine for Indian travellers.
 
@@ -748,10 +742,6 @@ Travellers: ${input.travellers}
 Travel type: ${input.travelType || "General"}
 Budget style: ${input.budgetStyle || "Comfort"}
 Food preference: ${input.foodPref || "Indian Food"}
-Travel pace: ${input.travelPace || "Balanced"}
-Family profile: ${input.familyProfile || "Not specified"}
-Travel month/dates: ${input.travelMonth || "Not specified"}
-Weather focus: ${input.weatherFocus || "General"}
 Special needs: ${input.specialNeeds || "None"}
 
 Budget preferences:
@@ -763,7 +753,7 @@ User shopping budget: INR ${input.shoppingBudget || 0}
 Trip itinerary:
 ${input.tripPlanText || "No itinerary text supplied."}
 
-Return ONLY valid JSON with this exact shape:
+Return ONLY valid JSON:
 {
  "destination": "string",
  "currency": "INR",
@@ -789,9 +779,7 @@ Return ONLY valid JSON with this exact shape:
  "disclaimer":"string"
 }
 
-Rules:
-Estimate approximate airfare/train/bus fare, home-to-airport/station transfer, destination arrival transfer, local sightseeing transport, entry tickets, food, hotel, SIM/roaming and emergency buffer.
-Amounts must be numeric INR values.`;
+Estimate approximate airfare/train/bus fare, home-to-airport/station transfer, destination arrival transfer, local sightseeing transport, entry tickets, food, hotel, SIM/roaming and emergency buffer. Amounts must be numeric INR values.`;
 
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(GEMINI_MODEL)}:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
   const response = await fetch(endpoint, {
@@ -802,10 +790,12 @@ Amounts must be numeric INR values.`;
       generationConfig: { temperature: 0.35, topP: 0.85, maxOutputTokens: 4096 }
     })
   });
+
   if (!response.ok) {
     console.error("Gemini budget API error:", response.status, await response.text());
     return null;
   }
+
   const data = await response.json();
   const text = data?.candidates?.[0]?.content?.parts?.map((part) => part.text || "").join("").trim();
   return extractJSONFromText(text);
@@ -820,6 +810,7 @@ app.post("/api/budget", requireUserOrGuest, async (req, res) => {
 
     const owner = getSessionOwner(req);
     const travellers = Math.max(1, Number(input.travellers) || 1);
+
     let aiBudget = null;
     let source = "fallback";
 
@@ -975,7 +966,6 @@ async function handleProfileUpdate(req, res) {
     }
 
     await ensureProfileAndTripColumns();
-  await ensureAdvancedTripPlannerColumns();
   await ensureAIBudgetColumns();
 
     await pool.query(
@@ -1173,135 +1163,6 @@ app.delete("/api/trip/:id", requireUserOrGuest, async (req, res) => {
   } catch (error) {
     console.error("Delete trip error:", error);
     res.status(500).json({ success: false, message: "Unable to delete trip." });
-  }
-});
-
-
-
-// API: AI Replan
-app.post("/api/replan", requireUserOrGuest, async (req, res) => {
-  try {
-    const {
-      fromCity,
-      destination,
-      days,
-      travellers,
-      travelType,
-      budgetStyle,
-      foodPref,
-      specialNeeds,
-      travelPace,
-      familyProfile,
-      travelMonth,
-      weatherFocus,
-      currentPlan,
-      replanReason,
-      replanNotes
-    } = req.body;
-
-    if (!destination || !currentPlan || !replanReason) {
-      return res.status(400).json({ success: false, message: "Destination, current plan and replan reason are required." });
-    }
-
-    const owner = getSessionOwner(req);
-    const tripDays = Math.max(1, Math.min(Number(days) || 3, 30));
-    const numTravellers = Number(travellers) || 1;
-
-    let revisedPlan = null;
-    let source = "rule-based";
-
-    if (GEMINI_API_KEY) {
-      try {
-        const prompt = `
-You are MyYatraMate, an AI travel replanning assistant.
-
-The traveller already has this plan:
-${currentPlan}
-
-Now replan the itinerary based on this situation:
-- Replan reason: ${replanReason}
-- Traveller notes: ${replanNotes || "None"}
-
-Original trip details:
-- From city: ${fromCity || "Not specified"}
-- Destination: ${destination}
-- Duration: ${tripDays} days
-- Travellers: ${numTravellers}
-- Travel type: ${travelType || "General Trip"}
-- Budget style: ${budgetStyle || "Comfort"}
-- Food preference: ${foodPref || "No Preference"}
-- Travel pace: ${travelPace || "Balanced"}
-- Family profile: ${familyProfile || "Not specified"}
-- Travel month/dates: ${travelMonth || "Not specified"}
-- Weather focus: ${weatherFocus || "General seasonal guidance"}
-- Special needs: ${specialNeeds || "None"}
-
-Output a clean revised plan:
-1. Start with "Replanned MyYatraMate Itinerary".
-2. Explain what changed in 3 bullets.
-3. Give revised day-wise itinerary.
-4. Add weather/family comfort precautions.
-5. Keep it practical and easy to follow.
-`;
-
-        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(GEMINI_MODEL)}:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
-
-        const response = await fetch(endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ role: "user", parts: [{ text: prompt }] }],
-            generationConfig: { temperature: 0.65, topP: 0.9, maxOutputTokens: 4096 }
-          })
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          revisedPlan = data?.candidates?.[0]?.content?.parts?.map((part) => part.text || "").join("").trim();
-          if (revisedPlan) {
-            revisedPlan = `MyYatraMate AI Replanned Trip\n\n${revisedPlan}`;
-            source = "gemini-ai";
-          }
-        } else {
-          console.error("Gemini replan API error:", response.status, await response.text());
-        }
-      } catch (aiError) {
-        console.error("AI replan failed:", aiError);
-      }
-    }
-
-    if (!revisedPlan) {
-      revisedPlan = `MyYatraMate Replanned Trip
-
-Reason for replan: ${replanReason}
-Notes: ${replanNotes || "None"}
-
-Suggested adjustment:
-- Reduce the number of attractions for the affected day.
-- Move important items to the next available slot.
-- Keep food, rest and local transport practical.
-- If weather is the issue, prefer indoor attractions, malls, museums or hotel-rest time.
-- If tiredness/senior/kids issue, reduce walking and keep the day light.
-
-Original plan reference:
-${currentPlan}`;
-    }
-
-    const [result] = await pool.query(
-      `INSERT INTO trip_plans (user_id, guest_id, from_city, destination, days, travellers, travel_type, budget_style, food_pref, special_needs, travel_pace, family_profile, travel_month, weather_focus, replan_reason, plan)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [owner.userId, owner.guestId, fromCity || "", destination, tripDays, numTravellers, travelType || "", budgetStyle || "", foodPref || "", specialNeeds || "", travelPace || "", familyProfile || "", travelMonth || "", weatherFocus || "", replanReason || "", revisedPlan]
-    );
-
-    res.json({
-      success: true,
-      message: source === "gemini-ai" ? "AI replanned itinerary generated successfully." : "Fallback replanned itinerary generated successfully.",
-      source,
-      trip: { id: result.insertId, fromCity, destination, days: tripDays, travellers: numTravellers, travelType, budgetStyle, foodPref, specialNeeds, travelPace, familyProfile, travelMonth, weatherFocus, replanReason, plan: revisedPlan }
-    });
-  } catch (error) {
-    console.error("Replan error:", error);
-    res.status(500).json({ success: false, message: "Unable to replan itinerary." });
   }
 });
 
