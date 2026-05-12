@@ -378,48 +378,6 @@
 
 
 
-
-
-    .ai-budget-table { width: 100%; border-collapse: collapse; margin: 18px 0; background: white; border-radius: 16px; overflow: hidden; border: 1px solid var(--border); }
-    .ai-budget-table th, .ai-budget-table td { border: 1px solid var(--border); padding: 12px; text-align: left; vertical-align: top; }
-    .ai-budget-table th { background: #071a33; color: white; }
-    .ai-budget-total-box { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 18px; padding: 18px; margin: 18px 0; }
-    .ai-budget-total-box strong { font-size: 28px; color: var(--orange); display: block; margin-top: 6px; }
-    .plan-comparison-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 18px 0; }
-    .plan-comparison-card { background: #f8fafc; border: 1px solid var(--border); border-radius: 18px; padding: 18px; text-align: center; }
-    .plan-comparison-card h3 { margin: 0 0 8px; color: var(--navy); }
-    .plan-comparison-card strong { font-size: 24px; color: var(--blue); }
-    @media (max-width: 950px) { .plan-comparison-grid { grid-template-columns: 1fr; } }
-
-    .advanced-trip-box {
-      grid-column: 1 / -1;
-      background: #f8fafc;
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 16px;
-      margin-top: 4px;
-    }
-
-    .advanced-trip-box h3 {
-      margin: 0 0 14px;
-      color: var(--navy);
-      font-size: 20px;
-    }
-
-    .replan-box {
-      display: none;
-      margin-top: 16px;
-      padding: 18px;
-      background: #fff7ed;
-      border: 1px solid #fed7aa;
-      border-radius: 18px;
-    }
-
-    .replan-box h3 {
-      margin: 0 0 10px;
-      color: #9a3412;
-    }
-
     .profile-summary {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -671,6 +629,18 @@
       100% { content: ""; }
     }
 
+
+    .ai-budget-table { width: 100%; border-collapse: collapse; margin: 18px 0; background: white; border-radius: 16px; overflow: hidden; border: 1px solid var(--border); }
+    .ai-budget-table th, .ai-budget-table td { border: 1px solid var(--border); padding: 12px; text-align: left; vertical-align: top; }
+    .ai-budget-table th { background: #071a33; color: white; }
+    .ai-budget-total-box { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 18px; padding: 18px; margin: 18px 0; }
+    .ai-budget-total-box strong { font-size: 28px; color: var(--orange); display: block; margin-top: 6px; }
+    .plan-comparison-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 18px 0; }
+    .plan-comparison-card { background: #f8fafc; border: 1px solid var(--border); border-radius: 18px; padding: 18px; text-align: center; }
+    .plan-comparison-card h3 { margin: 0 0 8px; color: var(--navy); }
+    .plan-comparison-card strong { font-size: 24px; color: var(--blue); }
+    @media (max-width: 950px) { .plan-comparison-grid { grid-template-columns: 1fr; } }
+
     .formatted-output {
       white-space: normal;
       font-size: 16px;
@@ -841,7 +811,6 @@
                 <option>Vegetarian</option>
                 <option>Jain</option>
                 <option>Halal</option>
-                <option>Diabetic-friendly</option>
                 <option>No Preference</option>
               </select>
             </div>
@@ -922,45 +891,8 @@
                 <option>Vegetarian</option>
                 <option>Jain</option>
                 <option>Halal</option>
-                <option>Diabetic-friendly</option>
                 <option>No Preference</option>
               </select>
-            </div>
-
-            <div class="advanced-trip-box">
-              <h3>Advanced Planning Preferences</h3>
-              <div class="form-grid">
-                <div class="form-group">
-                  <label>Travel Pace</label>
-                  <select id="travelPace">
-                    <option>Balanced</option>
-                    <option>Relaxed</option>
-                    <option>Packed</option>
-                  </select>
-                </div>
-
-                <div class="form-group">
-                  <label>Family Profile</label>
-                  <input id="familyProfile" placeholder="Example: 2 adults, 1 child, 2 senior citizens" />
-                </div>
-
-                <div class="form-group">
-                  <label>Travel Month / Dates</label>
-                  <input id="travelMonth" placeholder="Example: June 2026 / 15-20 June" />
-                </div>
-
-                <div class="form-group">
-                  <label>Weather-aware Suggestions</label>
-                  <select id="weatherFocus">
-                    <option>General seasonal guidance</option>
-                    <option>Rain backup plan</option>
-                    <option>Hot weather precautions</option>
-                    <option>Cold weather precautions</option>
-                    <option>Outdoor-friendly planning</option>
-                    <option>Indoor backup activities</option>
-                  </select>
-                </div>
-              </div>
             </div>
 
             <div class="form-group">
@@ -978,33 +910,6 @@
           <div class="export-actions" id="tripExportActions">
             <button class="export-btn" onclick="exportSectionToPDF('tripResult', 'MyYatraMate Trip Plan')">Download Trip PDF</button>
             <button class="export-btn light" onclick="copySectionText('tripResult')">Copy Plan</button>
-            <button class="export-btn light" onclick="showReplanBox()">AI Replan</button>
-          
-          <div class="replan-box" id="replanBox">
-            <h3>AI Replan Option</h3>
-            <p class="card-desc">Use this when rain, tiredness, late start or family needs change the plan.</p>
-            <div class="form-grid">
-              <div class="form-group">
-                <label>Reason</label>
-                <select id="replanReason">
-                  <option>Woke up late</option>
-                  <option>Rain / bad weather</option>
-                  <option>Traveller is tired</option>
-                  <option>Kids need lighter plan</option>
-                  <option>Senior citizens need more rest</option>
-                  <option>Traffic delay</option>
-                  <option>Business meeting schedule changed</option>
-                  <option>Need more shopping time</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label>Additional Notes</label>
-                <input id="replanNotes" placeholder="Example: Skip far places, keep dinner near hotel" />
-              </div>
-            </div>
-            <div class="action">
-              <button class="btn" onclick="replanTrip()">Generate Revised Plan</button>
-            </div>
           </div>
         </div>
 
@@ -2066,82 +1971,6 @@
     }
 
 
-
-    function showReplanBox() {
-      const box = document.getElementById("replanBox");
-      if (!box) {
-        alert("Please generate a trip plan first. Replan box is loading.");
-        return;
-      }
-      box.style.display = box.style.display === "block" ? "none" : "block";
-    }
-
-    async function replanTrip() {
-      const destination = document.getElementById("destination").value;
-      const days = document.getElementById("days").value;
-      const replanReason = document.getElementById("replanReason").value;
-
-      if (!currentTripPlanText) {
-        alert("Please generate a trip plan first.");
-        return;
-      }
-
-      if (!destination || !days || !replanReason) {
-        alert("Destination, days and replan reason are required.");
-        return;
-      }
-
-      hideExportActions("tripExportActions");
-      showTravelLoader();
-
-      const payload = {
-        fromCity: document.getElementById("fromCity").value,
-        destination,
-        days,
-        travellers: document.getElementById("tripTravellers").value,
-        travelType: document.getElementById("travelType").value,
-        budgetStyle: document.getElementById("budgetStyle").value,
-        foodPref: document.getElementById("foodPref").value,
-        specialNeeds: document.getElementById("specialNeeds").value,
-        travelPace: document.getElementById("travelPace").value,
-        familyProfile: document.getElementById("familyProfile").value,
-        travelMonth: document.getElementById("travelMonth").value,
-        weatherFocus: document.getElementById("weatherFocus").value,
-        currentPlan: currentTripPlanText,
-        replanReason,
-        replanNotes: document.getElementById("replanNotes").value
-      };
-
-      try {
-        const response = await fetch("/api/replan", {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-
-        const data = await response.json();
-
-        stopTravelLoader();
-
-        if (data.success) {
-          currentTripPlanText = data.trip.plan;
-          currentTripPlanText = data.trip.plan;
-          document.getElementById("tripResult").innerHTML = formatTravelPlan(data.trip.plan);
-          showExportActions("tripExportActions");
-          const box = document.getElementById("replanBox");
-          if (box) box.style.display = "none";
-        } else {
-          document.getElementById("tripResult").innerHTML = data.message || "Unable to replan itinerary.";
-        }
-      } catch (error) {
-        stopTravelLoader();
-        console.error(error);
-        document.getElementById("tripResult").innerHTML = "Something went wrong while replanning the itinerary.";
-      }
-    }
-
-
     async function generateTripPlan() {
       const fromCity = document.getElementById("fromCity").value || "Hyderabad";
       const destination = document.getElementById("destination").value;
@@ -2259,10 +2088,6 @@
         budgetStyle: document.getElementById("budgetStyle")?.value || "",
         foodPref: document.getElementById("foodPref")?.value || "",
         specialNeeds: document.getElementById("specialNeeds")?.value || "",
-        travelPace: document.getElementById("travelPace")?.value || "",
-        familyProfile: document.getElementById("familyProfile")?.value || "",
-        travelMonth: document.getElementById("travelMonth")?.value || "",
-        weatherFocus: document.getElementById("weatherFocus")?.value || "",
         tripPlanText: currentTripPlanText || document.getElementById("tripResult")?.innerText || "",
         travelMode: document.getElementById("budgetTravelMode").value,
         hotelCategory: document.getElementById("hotelCategory").value,
